@@ -63,6 +63,9 @@ button.chip{color:var(--ink)}
 input[type=text]{font:inherit;font-size:1.1rem;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
 form{display:flex;flex-direction:column;gap:10px}
 .note{font-size:.85rem;color:var(--muted)}
+.seg{display:inline-flex;align-self:flex-start;border:1.5px solid var(--line);border-radius:999px;padding:3px;gap:2px}
+.seg-b{border:none;border-radius:999px;padding:7px 16px;font-size:.95rem;color:var(--muted)}
+.seg-b[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
 .peak-now{animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{r:7}}
 .fade{animation:fade .25s ease}
@@ -82,7 +85,7 @@ form{display:flex;flex-direction:column;gap:10px}
 
 <script>
 (function(){
-const Q = {
+const Q_ALL = {
   liv:'살아 있는 생물인가요?', ani:'동물인가요?', mam:'털이 난 포유류인가요?', bird:'새인가요?',
   sea:'물속이나 물 위에서 지내나요?', bug:'곤충이나 벌레인가요?', pet:'집에서 반려동물로 키우나요?',
   farm:'농장에서 기르나요?', wild:'야생에 사나요?', big:'사람보다 큰가요?',
@@ -102,7 +105,7 @@ const Q = {
   sky:'하늘에서 볼 수 있나요?', wing:'날개가 있나요?', soup:'국물이 있나요?', walk:'산책을 시키나요?'
 };
 // A=동물, P=식물, F=음식, T=물건. "~"는 '그럴 수도 있음'
-const RAW = `강아지|A mam pet leg4 sound soft house
+const RAW_ALL = `강아지|A mam pet leg4 sound soft house
 고양이|A mam pet leg4 sound soft house ~black
 토끼|A mam pet leg4 soft white ~farm ~tiny
 햄스터|A mam pet leg4 soft tiny house ~carry
@@ -243,8 +246,85 @@ const RAW = `강아지|A mam pet leg4 sound soft house
 무지개|outdoor big sky`;
 
 const EXPAND = {A:'liv ani', P:'liv plant', F:'food', T:'thing'};
-const KEYS = Object.keys(Q);
-const STORE = 'seumugogae-learned-v1';
+
+
+const Q_CELEB = {
+  male:'남자인가요?', korean:'한국 사람인가요?', foreignborn:'외국에서 태어났나요?',
+  b80:'1980년 이후에 태어났나요?', b90:'1990년 이후에 태어났나요?', b00:'2000년 이후에 태어났나요?',
+  singer:'가수인가요?', idol:'아이돌 출신인가요?', group:'그룹 멤버인가요? (예전 포함)', leader:'그룹의 리더인가요?',
+  rapper:'랩을 하나요?', solo:'솔로 가수로도 활동하나요?', trot:'트로트 가수인가요?', dance:'춤으로 특히 유명한가요?',
+  actor:'배우인가요?', drama:'드라마로 유명한가요?', movie:'영화로 유명한가요?', hollywood:'할리우드 영화에 나왔나요?',
+  director:'영화감독인가요?', comedian:'개그맨(코미디언) 출신인가요?', mc:'예능 프로그램 진행(MC)을 자주 하나요?',
+  youtube:'유튜브나 인터넷 방송으로 유명한가요?', sports:'운동선수인가요?', soccer:'축구 선수인가요?',
+  game:'게임과 관련 있나요?', food:'음식이나 요리와 관련 있나요?', ceo:'회사(기획사·사업)를 운영하나요?',
+  world:'해외에서도 아주 유명한가요?', abroad:'주로 해외에서 활동하나요?', bts:'BTS 멤버인가요?',
+  blackpink:'블랙핑크 멤버인가요?', youngest:'그룹의 막내인가요?',
+  mudo:'무한도전에 나왔나요?', radio:'라디오 DJ로 유명한가요?', crash:"드라마 '사랑의 불시착'에 나왔나요?", europe:'유럽 출신인가요?'
+};
+const RAW_CELEB = `유재석|male korean comedian mc mudo
+강호동|male korean comedian mc ~sports food
+신동엽|male korean comedian mc
+박명수|male korean comedian mc ~singer mudo radio
+이영자|korean comedian mc food
+박나래|korean comedian mc b80
+송강호|male korean actor movie world
+이병헌|male korean actor movie drama hollywood world
+마동석|male korean actor movie hollywood ~sports
+이정재|male korean actor movie drama world ~director
+전지현|korean actor drama movie b80
+송혜교|korean actor drama b80
+공유|male korean actor drama movie
+현빈|male korean actor drama movie b80 crash
+손예진|korean actor drama movie b80 crash
+박서준|male korean actor drama b80
+차은우|male korean actor drama idol group singer b80 b90
+아이유|korean singer solo actor drama b80 b90
+이효리|korean singer solo idol group ~mc
+임영웅|male korean singer solo trot b80 b90
+장윤정|korean singer solo trot b80 ~mc
+송가인|korean singer solo trot b80
+싸이|male korean singer solo world dance ~ceo
+지드래곤|male korean singer idol group leader rapper solo b80 world
+태연|korean singer idol group leader solo b80
+윤아|korean singer idol group actor drama b80 b90
+장원영|korean singer idol group b80 b90 b00
+카리나|korean singer idol group leader dance b80 b90 b00
+RM|male korean singer idol group leader rapper bts b80 b90 world
+진|male korean singer idol group bts b80 b90 world
+지민|male korean singer idol group bts dance solo b80 b90 world
+정국|male korean singer idol group bts youngest solo b80 b90 world
+제니|korean singer idol group rapper blackpink solo b80 b90 world
+리사|singer idol group rapper dance blackpink youngest foreignborn b80 b90 world
+지수|korean singer idol group blackpink actor b80 b90 world
+로제|~korean singer idol group blackpink solo foreignborn b80 b90 world
+박진영|male korean singer solo ceo dance
+백종원|male korean food ceo mc
+페이커|male korean game b80 b90 world
+손흥민|male korean sports soccer abroad b80 b90 world
+김연아|korean sports b80 b90 world
+김연경|korean sports ~abroad b80 world
+오타니 쇼헤이|male sports abroad foreignborn b80 b90 world
+리오넬 메시|male sports soccer abroad foreignborn b80 world
+크리스티아누 호날두|male sports soccer abroad foreignborn b80 world europe
+테일러 스위프트|singer solo abroad foreignborn b80 world
+톰 크루즈|male actor movie hollywood abroad foreignborn world
+봉준호|male korean director movie world
+침착맨|male korean youtube ~game b80
+쯔양|korean youtube food b80 b90`;
+const THEMES = {
+  all:{label:'모든 것', Q:Q_ALL, RAW:RAW_ALL, chips:['동물','음식','물건','탈것','자연'],
+    prompt:'머릿속에 무언가 하나를 떠올려 주세요.', eg:'예: 고구마'},
+  celeb:{label:'연예인', Q:Q_CELEB, RAW:RAW_CELEB, chips:['가수·아이돌','배우','예능인','운동선수','유튜버'],
+    prompt:'유명한 사람을 한 명 떠올려 주세요.', eg:'예: 김종국'}
+};
+let theme = 'all', Q, RAW, KEYS, STORE;
+function setTheme(t){
+  theme = THEMES[t] ? t : 'all'; const T = THEMES[theme];
+  Q = T.Q; RAW = T.RAW; KEYS = Object.keys(Q);
+  STORE = theme === 'all' ? 'seumugogae-learned-v1' : 'seumugogae-learned-' + theme + '-v1';
+  try{ localStorage.setItem('seumugogae-theme', theme); }catch(e){}
+}
+try{ setTheme(localStorage.getItem('seumugogae-theme') || 'all'); }catch(e){ setTheme('all'); }
 
 function parse(){
   return RAW.split('\n').map(line => {
@@ -345,13 +425,15 @@ function ridge(n){
 function intro(){
   phase = 'intro'; answers = []; excluded = new Set(); lastGuessQn = -1; cur = null;
   buildItems(); ridge(0);
+  const T = THEMES[theme];
   show(`
-    <span class="eyebrow">시작하기 전에</span>
-    <h2 class="q">머릿속에 무언가 하나를 떠올려 주세요.</h2>
+    <div class="seg" role="group" aria-label="주제">${Object.keys(THEMES).map(t => `<button class="seg-b" data-t="${t}" aria-pressed="${t === theme}">${THEMES[t].label}</button>`).join('')}</div>
+    <h2 class="q">${T.prompt}</h2>
     <p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 고개를 다 넘기 전에 맞혀 볼게요.</p>
-    <div class="chips"><span class="chip">동물</span><span class="chip">음식</span><span class="chip">물건</span><span class="chip">탈것</span><span class="chip">자연</span></div>
+    <div class="chips">${T.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
     <button class="primary big" id="start">생각했어요, 시작!</button>
-    <p class="note">지금 아는 것 ${items.length}개 · 못 맞히면 정답을 알려 주세요. 이 기기에서 다음부터 기억해요.</p>`);
+    <p class="note">지금 아는 ${theme === 'celeb' ? '사람' : '것'} ${items.length}${theme === 'celeb' ? '명' : '개'} · 못 맞히면 정답을 알려 주세요. 이 기기에서 다음부터 기억해요.</p>`);
+  card.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if(b.dataset.t !== theme){ setTheme(b.dataset.t); intro(); } });
   document.getElementById('start').onclick = next;
 }
 
@@ -427,11 +509,11 @@ function lose(){
   const top = W.map((w,i) => ({w,i})).filter(x => x.w > 0).sort((a,b) => b.w - a.w).slice(0,4);
   show(`
     <span class="eyebrow">스무 고개를 다 넘었어요</span>
-    <h2 class="q">제가 졌어요. 무엇을 생각하셨어요?</h2>
+    <h2 class="q">제가 졌어요. ${theme === 'celeb' ? '누구를' : '무엇을'} 생각하셨어요?</h2>
     ${top.length ? `<div class="chips">${top.map(x => `<button class="chip" data-n="${esc(items[x.i].name)}">${esc(items[x.i].name)}</button>`).join('')}</div>` : ''}
     <form id="teach">
       <label class="note" for="answer">정답을 알려 주시면 다음엔 맞혀 볼게요</label>
-      <input type="text" id="answer" maxlength="20" placeholder="예: 고구마" autocomplete="off">
+      <input type="text" id="answer" maxlength="20" placeholder="${esc(THEMES[theme].eg)}" autocomplete="off">
       <button class="primary big" type="submit">알려 주기</button>
     </form>
     <button class="link" id="skip">그냥 다시 하기</button>`);
