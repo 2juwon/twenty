@@ -1,0 +1,468 @@
+<!doctype html>
+<html lang="ko">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>
+</head>
+<body>
+<title>스무고개</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 화면 위에 스무 개의 고개(산등성이)가 이어지고, 질문 하나마다 한 고개씩 넘어간다. 아래는 질문 카드 하나. */
+:root{
+  --bg:#e9efec; --surface:#f7faf8; --ink:#1c2830; --muted:#5e6f6a;
+  --ridge:#7d9a8f; --ridge-back:#c3d3cc; --accent:#d9971f; --accent-ink:#1c2830;
+  --line:#cfdbd5;
+  --display:"Black Han Sans","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11191d; --surface:#18232a; --ink:#e4ece8; --muted:#94a8a1;
+  --ridge:#6f9384; --ridge-back:#2a3b3a; --accent:#f0b443; --accent-ink:#11191d;
+  --line:#2b3a3d; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11191d; --surface:#18232a; --ink:#e4ece8; --muted:#94a8a1;
+  --ridge:#6f9384; --ridge-back:#2a3b3a; --accent:#f0b443; --accent-ink:#11191d;
+  --line:#2b3a3d; color-scheme:dark}
+html,body{height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.6;padding-inline:16px}
+.wrap{max-width:520px;margin:0 auto;padding-block:20px 32px;display:flex;flex-direction:column;gap:18px;min-height:100%;box-sizing:border-box}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+h1{font-family:var(--display);font-weight:400;font-size:2rem;margin:0;letter-spacing:.02em}
+.count{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.95rem}
+.count b{color:var(--ink);font-family:var(--display);font-weight:400;font-size:1.25rem}
+svg.ridge{width:100%;height:auto;display:block}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:24px 20px;display:flex;flex-direction:column;gap:18px}
+.eyebrow{font-size:.85rem;color:var(--muted);letter-spacing:.06em}
+.q{font-family:var(--display);font-weight:400;font-size:1.65rem;line-height:1.35;margin:0;text-wrap:balance;word-break:keep-all}
+.q em{font-style:normal;color:var(--accent)}
+p{margin:0;word-break:keep-all}
+.lead{color:var(--muted)}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.row3{display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+button{font:inherit;cursor:pointer;border-radius:12px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:14px 10px;transition:transform .08s ease, background .15s}
+button:active{transform:scale(.97)}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.big{font-family:var(--display);font-weight:400;font-size:1.3rem}
+.primary{background:var(--ink);color:var(--bg)}
+.gold{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.soft{border-color:var(--line);font-size:.95rem;padding:11px 6px}
+.soft:hover{border-color:var(--ridge)}
+.link{border:none;padding:6px 0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;align-self:flex-start;font-size:.92rem}
+.link:disabled{opacity:.35;cursor:default;text-decoration:none}
+.foot{display:flex;justify-content:space-between;align-items:center;gap:12px}
+.hunch{display:flex;align-items:center;gap:8px;color:var(--muted);font-size:.85rem}
+.hunch i{display:block;width:72px;height:6px;border-radius:3px;background:var(--line);overflow:hidden}
+.hunch i span{display:block;height:100%;background:var(--accent);width:0;transition:width .4s ease}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.9rem;color:var(--muted)}
+button.chip{color:var(--ink)}
+.answer{font-family:var(--display);font-weight:400;font-size:2.6rem;line-height:1.2;color:var(--accent);margin:0;word-break:keep-all}
+input[type=text]{font:inherit;font-size:1.1rem;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box}
+form{display:flex;flex-direction:column;gap:10px}
+.note{font-size:.85rem;color:var(--muted)}
+.peak-now{animation:pulse 1.6s ease-in-out infinite}
+@keyframes pulse{50%{r:7}}
+.fade{animation:fade .25s ease}
+@keyframes fade{from{opacity:.4;transform:translateY(4px)}to{opacity:1;transform:none}}
+@media (prefers-reduced-motion:reduce){.peak-now,.fade{animation:none}button{transition:none}}
+@media (max-width:380px){.q{font-size:1.4rem}.row3{grid-template-columns:1fr 1fr}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1>스무고개</h1>
+    <div class="count" id="count"><b>20</b>개의 고개</div>
+  </header>
+  <svg class="ridge" id="ridge" viewBox="0 0 400 96" aria-hidden="true"></svg>
+  <main class="card fade" id="card"></main>
+</div>
+
+<script>
+(function(){
+const Q = {
+  liv:'살아 있는 생물인가요?', ani:'동물인가요?', mam:'털이 난 포유류인가요?', bird:'새인가요?',
+  sea:'물속이나 물 위에서 지내나요?', bug:'곤충이나 벌레인가요?', pet:'집에서 반려동물로 키우나요?',
+  farm:'농장에서 기르나요?', wild:'야생에 사나요?', big:'사람보다 큰가요?',
+  tiny:'손바닥에 올라갈 만큼 작나요?', leg4:'다리가 네 개인가요?', fly:'하늘을 날 수 있나요?',
+  scary:'위험하거나 무섭게 느껴지나요?', plant:'식물인가요?', food:'먹을 수 있나요?',
+  fruit:'과일인가요?', veg:'채소인가요?', sweet:'단맛이 나나요?', spicy:'매운 편인가요?',
+  kfood:'한국 음식인가요?', noodle:'면 요리인가요?', meal:'끼니(식사)로 먹나요?',
+  snack:'간식이나 디저트인가요?', drink:'마시는 것인가요?', cold:'차갑거나 차갑게 먹나요?',
+  hot:'뜨겁거나 뜨겁게 먹나요?', thing:'사람이 만든 물건인가요?', elec:'전기나 배터리가 필요한가요?',
+  screen:'화면이 달려 있나요?', ride:'사람이 탈 수 있나요?', wheel:'바퀴가 있나요?',
+  road:'도로 위를 다니나요?', house:'집 안에서 흔히 볼 수 있나요?', kitchen:'부엌에서 쓰나요?',
+  wear:'몸에 입거나 착용하나요?', carry:'한 손으로 들 수 있나요?', school:'학교나 공부할 때 쓰나요?',
+  sport:'운동이나 스포츠와 관련 있나요?', music:'음악을 연주하는 것인가요?', round:'둥근 모양인가요?',
+  red:'주로 빨간색인가요?', yellow:'주로 노란색인가요?', green:'주로 초록색인가요?',
+  white:'주로 흰색인가요?', black:'주로 검은색인가요?', metal:'금속으로 되어 있나요?',
+  soft:'만지면 말랑하거나 푹신한가요?', outdoor:'주로 바깥에 있나요?', sound:'소리를 내나요?',
+  sky:'하늘에서 볼 수 있나요?', wing:'날개가 있나요?', soup:'국물이 있나요?', walk:'산책을 시키나요?'
+};
+// A=동물, P=식물, F=음식, T=물건. "~"는 '그럴 수도 있음'
+const RAW = `강아지|A mam pet leg4 sound soft house
+고양이|A mam pet leg4 sound soft house ~black
+토끼|A mam pet leg4 soft white ~farm ~tiny
+햄스터|A mam pet leg4 soft tiny house ~carry
+소|A mam farm leg4 big sound outdoor ~black ~white
+돼지|A mam farm leg4 sound outdoor
+말|A mam farm leg4 big ride sound outdoor ~sport
+양|A mam farm leg4 soft white outdoor sound
+닭|A bird farm sound outdoor white wing
+오리|A bird farm sea fly sound outdoor ~yellow wing
+펭귄|A bird sea wild black white outdoor wing
+독수리|A bird fly wild scary outdoor sky wing
+비둘기|A bird fly outdoor sound sky wing
+앵무새|A bird fly pet sound green ~red house wing
+사자|A mam wild leg4 big scary sound yellow outdoor
+호랑이|A mam wild leg4 big scary sound yellow black outdoor
+코끼리|A mam wild leg4 big sound outdoor
+기린|A mam wild leg4 big yellow outdoor
+곰|A mam wild leg4 big scary soft outdoor ~black
+원숭이|A mam wild sound outdoor
+판다|A mam wild leg4 big soft black white outdoor
+여우|A mam wild leg4 outdoor ~red
+다람쥐|A mam wild leg4 tiny outdoor soft
+고래|A mam sea wild big sound
+상어|A sea wild big scary
+금붕어|A sea pet tiny red house
+문어|A sea wild soft ~red ~food
+거북이|A sea leg4 ~pet ~wild green
+개구리|A leg4 ~sea tiny green outdoor sound wild
+뱀|A wild scary outdoor ~green
+악어|A wild sea leg4 big scary green outdoor
+나비|A bug fly tiny outdoor wild ~yellow wing
+꿀벌|A bug fly tiny scary yellow black outdoor sound wing
+개미|A bug tiny black outdoor wild
+모기|A bug fly tiny sound house scary wing
+거미|A ~bug tiny scary black wild ~house
+달팽이|A ~bug tiny soft outdoor wild
+공룡|A big scary wild ~green outdoor sound
+해바라기|P yellow outdoor ~big
+장미|P red outdoor
+선인장|P green ~house ~scary
+나무|P green big outdoor
+네잎클로버|P green tiny outdoor
+사과|F fruit sweet red round carry snack
+바나나|F fruit sweet yellow carry snack
+수박|F fruit sweet green round cold
+딸기|F fruit sweet red tiny snack
+포도|F fruit sweet round ~green
+귤|F fruit sweet ~yellow round tiny carry snack
+복숭아|F fruit sweet round soft
+당근|F veg ~red
+감자|F veg round ~hot
+고추|F veg spicy red ~green ~kfood
+옥수수|F veg yellow sweet ~snack hot
+김치|F kfood spicy red meal
+떡볶이|F kfood spicy red snack hot soft ~soup
+비빔밥|F kfood meal hot ~spicy
+김밥|F kfood meal carry black
+라면|F noodle meal hot spicy ~kfood soup
+짜장면|F noodle meal hot black
+냉면|F noodle kfood meal cold soup
+삼겹살|F kfood meal hot
+된장찌개|F kfood meal hot soup
+치킨|F meal hot snack ~kfood yellow
+피자|F meal hot round
+햄버거|F meal round carry
+초밥|F meal cold
+아이스크림|F snack sweet cold soft
+초콜릿|F snack sweet ~black carry tiny
+케이크|F snack sweet soft round ~white
+떡|F kfood snack sweet soft white
+빵|F snack ~meal soft ~sweet carry
+붕어빵|F kfood snack sweet hot outdoor carry
+달걀|F round white tiny kitchen
+우유|F drink white cold
+커피|F drink hot black ~cold
+콜라|F drink sweet cold ~black
+팝콘|F snack ~sweet white
+솜사탕|F snack sweet soft ~white
+냉장고|T elec house kitchen big cold white
+텔레비전|T elec screen house sound black
+세탁기|T elec house big white sound
+전자레인지|T elec house kitchen hot
+스마트폰|T elec screen carry sound black
+노트북|T elec screen carry ~school black
+에어컨|T elec house cold white
+선풍기|T elec house round
+시계|T ~elec house round ~wear sound
+침대|T house big soft
+의자|T house ~school
+숟가락|T kitchen metal carry tiny
+젓가락|T kitchen metal carry
+냄비|T kitchen metal hot round
+컵|T kitchen house carry round
+우산|T carry outdoor
+안경|T wear tiny carry
+모자|T wear soft carry
+신발|T wear outdoor
+양말|T wear soft tiny
+가방|T carry ~wear school
+연필|T school carry tiny yellow
+지우개|T school tiny carry soft white
+책|T school carry house
+가위|T school metal carry tiny ~scary
+칠판|T school green big
+거울|T house ~carry
+칫솔|T house carry tiny
+베개|T house soft white
+인형|T house soft carry
+열쇠|T metal tiny carry
+동전|T metal tiny round carry
+풍선|T soft round ~red carry outdoor ~sky
+양초|T house hot white
+전구|T elec house round hot
+리모컨|T elec carry house black
+카메라|T elec carry screen black
+이어폰|T elec wear tiny sound white
+피아노|T music sound house big black white
+기타|T music sound ~carry
+북|T music sound round
+축구공|T sport round outdoor white black
+야구방망이|T sport outdoor carry ~metal
+자전거|T ride wheel outdoor road sport metal
+킥보드|T ride wheel outdoor ~elec ~carry
+자동차|T ride wheel road ~elec outdoor big metal sound
+버스|T ride wheel road big outdoor sound
+소방차|T ride wheel road big red sound metal outdoor
+오토바이|T ride wheel road metal sound outdoor
+기차|T ride wheel big metal outdoor sound ~elec
+지하철|T ride wheel big metal sound elec
+비행기|T ride fly big metal outdoor sound sky wing
+헬리콥터|T ride fly big metal sound outdoor sky
+배|T ride sea big outdoor
+로켓|T fly big metal scary ~ride sky sound ~wing
+눈사람|~thing outdoor white cold round
+해|round hot yellow outdoor big sky
+달|round yellow outdoor big sky
+구름|white soft outdoor big sky
+무지개|outdoor big sky`;
+
+const EXPAND = {A:'liv ani', P:'liv plant', F:'food', T:'thing'};
+const KEYS = Object.keys(Q);
+const STORE = 'seumugogae-learned-v1';
+
+function parse(){
+  return RAW.split('\n').map(line => {
+    const [name, tags] = line.split('|');
+    const v = {};
+    tags.split(/\s+/).forEach(t => {
+      if(!t) return;
+      const maybe = t[0] === '~'; const key = maybe ? t.slice(1) : t;
+      (EXPAND[key] || key).split(' ').forEach(k => { v[k] = maybe ? 0.5 : 1; });
+    });
+    return {name, v, def:0};
+  });
+}
+function loadLearned(){ try{ return JSON.parse(localStorage.getItem(STORE)) || []; }catch(e){ return []; } }
+function saveLearned(list){ try{ localStorage.setItem(STORE, JSON.stringify(list.slice(-300))); return true; }catch(e){ return false; } }
+
+let items = [];
+function buildItems(){
+  items = parse();
+  loadLearned().forEach(l => {
+    if(!l || !l.name || !l.ans) return;
+    let it = items.find(x => x.name === l.name);
+    if(!it){ it = {name:l.name, v:{}, def:0.3}; items.push(it); }
+    for(const k in l.ans){ if(!(k in Q)) continue; const a = l.ans[k];
+      it.v[k] = (k in it.v) ? (it.v[k] + a) / 2 : a; }
+  });
+}
+const val = (it,k) => (k in it.v) ? it.v[k] : it.def;
+const lik = (v,a) => Math.max(0.04, 1 - 0.92*Math.abs(a - v));
+
+// 상태
+let answers = [], excluded = new Set(), cur = null, lastGuessQn = -1, guessIdx = -1, phase = 'intro';
+
+function weights(){
+  return items.map((it,i) => {
+    if(excluded.has(i)) return 0;
+    let w = 1;
+    for(const {k,a} of answers){ if(a !== null) w *= lik(val(it,k), a); }
+    return w;
+  });
+}
+function best(W){
+  let tot = 0, top = -1, m = 0;
+  W.forEach((w,i) => { tot += w; if(w > m){ m = w; top = i; } });
+  return {top, p: tot ? m/tot : 0, tot};
+}
+function entropy(arr){
+  let s = 0; for(const x of arr) s += x; if(!s) return 0;
+  let h = 0; for(const x of arr){ if(x > 0){ const p = x/s; h -= p*Math.log2(p); } } return h;
+}
+function pickKey(W, tot){
+  const asked = new Set(answers.map(x => x.k));
+  const scored = [];
+  for(const k of KEYS){
+    if(asked.has(k)) continue;
+    const wy = [], wn = []; let py = 0;
+    items.forEach((it,i) => { const w = W[i]; if(!w) return; const v = val(it,k);
+      wy.push(w*lik(v,1)); wn.push(w*lik(v,0)); py += w*Math.min(.95, Math.max(.05, v)); });
+    py /= tot;
+    scored.push({k, s: py*entropy(wy) + (1-py)*entropy(wn)});
+  }
+  if(!scored.length) return null;
+  scored.sort((a,b) => a.s - b.s);
+  const near = scored.filter(x => x.s - scored[0].s < 0.04).slice(0,3);
+  return near[Math.floor(Math.random()*near.length)].k;
+}
+
+// 화면
+const card = document.getElementById('card');
+const ORD = ['첫','두','세','네','다섯','여섯','일곱','여덟','아홉','열','열한','열두','열세','열네','열다섯','열여섯','열일곱','열여덟','열아홉','스무'];
+const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+
+function show(html){ card.classList.remove('fade'); void card.offsetWidth; card.innerHTML = html; card.classList.add('fade'); }
+
+function ridge(n){
+  const svg = document.getElementById('ridge');
+  const xs = i => 12 + i*(376/19);
+  const ys = i => i === 19 ? 14 : 58 - 30*Math.abs(Math.sin(i*2.1 + 0.7)) - i*0.6;
+  let back = 'M0 96 L0 70', front = 'M0 96 L0 80';
+  for(let i=0;i<20;i++){
+    const x = xs(i), y = ys(i), vx = x - 376/38;
+    back += ` L${(vx+4).toFixed(1)} ${(y+30).toFixed(1)} L${(x+6).toFixed(1)} ${(y+8).toFixed(1)}`;
+    front += ` L${vx.toFixed(1)} ${Math.min(88, y+28).toFixed(1)} L${x.toFixed(1)} ${y.toFixed(1)}`;
+  }
+  back += ' L400 66 L400 96 Z'; front += ' L400 78 L400 96 Z';
+  let dots = '';
+  for(let i=0;i<20;i++){
+    const x = xs(i).toFixed(1), y = ys(i).toFixed(1);
+    if(i < n) dots += `<circle cx="${x}" cy="${y}" r="4.5" fill="var(--accent)"/>`;
+    else if(i === n && phase === 'play') dots += `<circle class="peak-now" cx="${x}" cy="${y}" r="5" fill="var(--bg)" stroke="var(--accent)" stroke-width="2.5"/>`;
+    else dots += `<circle cx="${x}" cy="${y}" r="3" fill="var(--bg)" stroke="var(--ridge)" stroke-width="1.5"/>`;
+  }
+  svg.innerHTML = `<path d="${back}" fill="var(--ridge-back)"/><path d="${front}" fill="var(--ridge)"/>${dots}`;
+  document.getElementById('count').innerHTML = phase === 'intro'
+    ? `<b>20</b>개의 고개` : `<b>${Math.min(n,20)}</b> / 20 고개`;
+}
+
+function intro(){
+  phase = 'intro'; answers = []; excluded = new Set(); lastGuessQn = -1; cur = null;
+  buildItems(); ridge(0);
+  show(`
+    <span class="eyebrow">시작하기 전에</span>
+    <h2 class="q">머릿속에 무언가 하나를 떠올려 주세요.</h2>
+    <p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 고개를 다 넘기 전에 맞혀 볼게요.</p>
+    <div class="chips"><span class="chip">동물</span><span class="chip">음식</span><span class="chip">물건</span><span class="chip">탈것</span><span class="chip">자연</span></div>
+    <button class="primary big" id="start">생각했어요, 시작!</button>
+    <p class="note">지금 아는 것 ${items.length}개 · 못 맞히면 정답을 알려 주세요. 이 기기에서 다음부터 기억해요.</p>`);
+  document.getElementById('start').onclick = next;
+}
+
+function next(){
+  phase = 'play';
+  const W = weights(); const {top, p, tot} = best(W);
+  const qn = answers.length;
+  if(top < 0 || !tot) return lose();
+  const k = qn < 20 ? pickKey(W, tot) : null;
+  if(qn >= 20 || !k || (p >= 0.82 && qn >= 4 && qn > lastGuessQn)) return guess(top);
+  ask(k, p);
+}
+
+function ask(k, p){
+  phase = 'play'; cur = k; const qn = answers.length; ridge(qn);
+  if(p === undefined){ p = best(weights()).p; }
+  const label = p > .6 ? '거의 알 것 같아요' : p > .3 ? '감이 오고 있어요' : '아직 감 잡는 중';
+  show(`
+    <span class="eyebrow">${ORD[qn]} 번째 고개</span>
+    <h2 class="q">${esc(Q[k])}</h2>
+    <div class="row">
+      <button class="primary big" data-a="1">예</button>
+      <button class="big" data-a="0">아니요</button>
+    </div>
+    <div class="row3">
+      <button class="soft" data-a="0.75">아마도요</button>
+      <button class="soft" data-a="null">모르겠어요</button>
+      <button class="soft" data-a="0.25">아마 아니요</button>
+    </div>
+    <div class="foot">
+      <button class="link" id="undo" ${qn ? '' : 'disabled'}>이전 질문으로</button>
+      <span class="hunch">${label}<i><span style="width:${Math.round(Math.min(1,p)*100)}%"></span></i></span>
+    </div>`);
+  card.querySelectorAll('[data-a]').forEach(b => b.onclick = () => answer(b.dataset.a === 'null' ? null : Number(b.dataset.a)));
+  document.getElementById('undo').onclick = undo;
+}
+
+function answer(a){ if(phase !== 'play' || !cur) return; answers.push({k:cur, a}); cur = null; next(); }
+function undo(){ if(!answers.length) return; const last = answers.pop(); lastGuessQn = Math.min(lastGuessQn, answers.length - 1); ask(last.k); }
+
+function guess(i){
+  phase = 'guess'; guessIdx = i; lastGuessQn = answers.length; ridge(answers.length);
+  show(`
+    <span class="eyebrow">${answers.length}개의 고개를 넘었어요</span>
+    <h2 class="q">혹시 생각한 게…</h2>
+    <p class="answer">${esc(items[i].name)}</p>
+    <div class="row">
+      <button class="gold big" id="yes">맞아요!</button>
+      <button class="big" id="no">아니에요</button>
+    </div>`);
+  document.getElementById('yes').onclick = win;
+  document.getElementById('no').onclick = () => {
+    excluded.add(guessIdx);
+    if(answers.length >= 20) return lose();
+    next();
+  };
+}
+
+function win(){
+  phase = 'end'; ridge(answers.length);
+  const n = answers.length;
+  show(`
+    <span class="eyebrow">맞혔어요</span>
+    <p class="answer">${esc(items[guessIdx].name)}</p>
+    <p class="lead">${n ? ORD[Math.max(0,n-1)] + ' 번째 고개에서 맞혔어요.' : '질문 없이 바로 맞혔어요.'} ${excluded.size ? `(${excluded.size}번 틀린 뒤에)` : ''}</p>
+    <button class="primary big" id="again">한 번 더 하기</button>`);
+  document.getElementById('again').onclick = intro;
+}
+
+function lose(){
+  phase = 'end'; ridge(answers.length);
+  const W = weights();
+  const top = W.map((w,i) => ({w,i})).filter(x => x.w > 0).sort((a,b) => b.w - a.w).slice(0,4);
+  show(`
+    <span class="eyebrow">스무 고개를 다 넘었어요</span>
+    <h2 class="q">제가 졌어요. 무엇을 생각하셨어요?</h2>
+    ${top.length ? `<div class="chips">${top.map(x => `<button class="chip" data-n="${esc(items[x.i].name)}">${esc(items[x.i].name)}</button>`).join('')}</div>` : ''}
+    <form id="teach">
+      <label class="note" for="answer">정답을 알려 주시면 다음엔 맞혀 볼게요</label>
+      <input type="text" id="answer" maxlength="20" placeholder="예: 고구마" autocomplete="off">
+      <button class="primary big" type="submit">알려 주기</button>
+    </form>
+    <button class="link" id="skip">그냥 다시 하기</button>`);
+  card.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { document.getElementById('answer').value = b.dataset.n; });
+  document.getElementById('skip').onclick = intro;
+  document.getElementById('teach').onsubmit = e => {
+    e.preventDefault();
+    const name = document.getElementById('answer').value.trim().slice(0,20);
+    if(!name){ document.getElementById('answer').focus(); return; }
+    const ans = {};
+    answers.forEach(({k,a}) => { if(a !== null) ans[k] = a; });
+    const list = loadLearned(); list.push({name, ans});
+    const ok = saveLearned(list);
+    show(`
+      <span class="eyebrow">고마워요</span>
+      <p class="answer">${esc(name)}</p>
+      <p class="lead">${ok ? '이 기기에 기억해 뒀어요. 다음 판부터는 맞혀 볼게요.' : '이 브라우저에서는 저장이 막혀 있어서 기억하지 못했어요.'}</p>
+      <button class="primary big" id="again">한 번 더 하기</button>`);
+    document.getElementById('again').onclick = intro;
+  };
+}
+
+document.addEventListener('keydown', e => {
+  if(phase !== 'play' || e.target.tagName === 'INPUT') return;
+  if(e.key === 'y' || e.key === 'Y') answer(1);
+  if(e.key === 'n' || e.key === 'N') answer(0);
+});
+
+intro();
+})();
+</script>
+
+</body>
+</html>
