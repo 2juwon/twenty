@@ -1,0 +1,570 @@
+# 스무고개 '모든 것' 데이터
+# 형식
+#   ?키 질문            → 질문 정의
+#   @태그 태그 ...      → 아래 항목들의 기본 태그 (다음 @줄까지)
+#   이름/별명|태그 ...  → 항목. ~태그 = 그럴 수도, -태그 = 기본 태그 빼기
+#   A=동물(liv ani), P=식물(liv plant), F=음식(food), T=물건(thing)
+
+?liv 살아 있는 생물인가요?
+?ani 동물인가요?
+?plant 식물인가요?
+?food 먹을 수 있나요?
+?thing 사람이 만든 물건인가요?
+?place 장소인가요?
+?job 직업인가요?
+?char 만화·영화·게임 속 캐릭터인가요?
+?nature 자연에 있는 것(자연 현상)인가요?
+?mam 털이 난 포유류인가요?
+?bird 새인가요?
+?fish 물고기나 바다 생물인가요?
+?bug 곤충이나 벌레인가요?
+?reptile 파충류나 양서류인가요?
+?pet 집에서 반려동물로 키우나요?
+?farm 농장에서 기르나요?
+?wild 야생에 사나요?
+?zoo 동물원에서 볼 수 있나요?
+?big 사람보다 큰가요?
+?tiny 손바닥에 올라갈 만큼 작나요?
+?leg4 다리가 네 개인가요?
+?fly 하늘을 날 수 있나요?
+?wing 날개가 있나요?
+?swim 헤엄을 칠 수 있나요?
+?scary 위험하거나 무섭게 느껴지나요?
+?horn 뿔이나 엄니(긴 이빨)가 있나요?
+?tail 꼬리가 눈에 띄나요?
+?stripe 줄무늬나 점무늬가 있나요?
+?eatmeat 다른 동물을 잡아먹나요?
+?cute 귀엽다는 말을 많이 듣나요?
+?walk 산책을 시키나요?
+?night 밤과 관련 있나요?
+?flower 꽃인가요?
+?tree 나무와 관련 있나요?
+?sky 하늘에서 볼 수 있나요?
+?water 물과 관련 있나요?
+?summer 여름과 관련 있나요?
+?winter 겨울과 관련 있나요?
+?fruit 과일인가요?
+?veg 채소인가요?
+?sweet 단맛이 나나요?
+?sour 신맛이 나나요?
+?spicy 매운 편인가요?
+?kfood 한국 음식인가요?
+?chn 중국 음식인가요?
+?jp 일본에서 왔나요?
+?western 서양에서 온 것인가요?
+?noodle 면 요리인가요?
+?rice 밥이나 쌀로 만드나요?
+?bread 밀가루로 만드나요?
+?meat 고기가 들어가나요?
+?seafood 해산물이 들어가나요?
+?fried 기름에 튀기나요?
+?soup 국물이 있나요?
+?meal 끼니(식사)로 먹나요?
+?snack 간식이나 디저트인가요?
+?deliv 배달로 많이 시켜 먹나요?
+?drink 마시는 것인가요?
+?peel 껍질을 벗기거나 까서 먹나요?
+?cold 차갑거나 차갑게 먹나요?
+?hot 뜨겁거나 뜨겁게 먹나요?
+?elec 전기나 배터리가 필요한가요?
+?screen 화면이 달려 있나요?
+?light 빛을 내나요?
+?ride 사람이 탈 수 있나요?
+?wheel 바퀴가 있나요?
+?road 도로 위를 다니나요?
+?house 집 안에서 흔히 볼 수 있나요?
+?kitchen 부엌에서 쓰나요?
+?bath 욕실(화장실)에서 쓰나요?
+?clean 씻거나 청소할 때 쓰나요?
+?wear 몸에 입거나 착용하나요?
+?carry 한 손으로 들 수 있나요?
+?school 학교나 공부와 관련 있나요?
+?write 글씨를 쓰거나 그림 그릴 때 쓰나요?
+?paper 종이로 되어 있나요?
+?sit 앉거나 누울 때 쓰나요?
+?sport 운동이나 스포츠와 관련 있나요?
+?ball 공인가요?
+?toy 장난감이나 놀이와 관련 있나요?
+?music 음악을 연주하는 것인가요?
+?metal 금속으로 되어 있나요?
+?soft 만지면 말랑하거나 푹신한가요?
+?sharp 뾰족하거나 날카로운가요?
+?round 둥근 모양인가요?
+?building 건물인가요?
+?sick 아프거나 다쳤을 때와 관련 있나요?
+?help 사람을 돕거나 지켜 주나요?
+?uniform 제복이나 유니폼을 입나요?
+?human 사람 모습인가요?
+?kids 어린이들이 특히 좋아하나요?
+?magic 마법이나 초능력을 쓰나요?
+?hero 슈퍼히어로인가요?
+?disney 디즈니와 관련 있나요?
+?kr 한국에서 만들어졌나요?
+?game 게임과 관련 있나요?
+?outdoor 주로 바깥에 있나요?
+?sound 소리를 내나요?
+?red 주로 빨간색인가요?
+?yellow 주로 노란색인가요?
+?green 주로 초록색인가요?
+?blue 주로 파란색인가요?
+?white 주로 흰색인가요?
+?black 주로 검은색인가요?
+?brown 주로 갈색인가요?
+?pink 주로 분홍색인가요?
+?kick 발로 차거나 발을 많이 쓰나요?
+?grill 불판에 구워 먹나요?
+?mouth 입에 넣거나 입과 관련 있나요?
+?glass 유리로 되어 있나요?
+?pair 두 개가 한 쌍인가요?
+?many 여러 사람이 함께 타나요?
+?twowheel 바퀴가 두 개인가요?
+
+@A mam pet house cute soft
+강아지/개/멍멍이|leg4 walk sound tail swim ~brown ~white
+고양이/냥이|leg4 sound tail eatmeat ~night ~black
+햄스터|leg4 tiny ~brown
+토끼|leg4 white ~farm ~tiny
+기니피그|leg4 ~tiny brown
+
+@A mam farm outdoor leg4 sound
+소/젖소|big horn tail ~black ~white
+돼지|pink tail
+말|big ride tail ~sport ~brown
+양|soft white cute
+염소|horn white
+당나귀|ride ~big brown
+
+@A mam wild zoo leg4 outdoor
+사자|big scary sound yellow eatmeat tail
+호랑이|big scary sound yellow black stripe eatmeat tail
+치타/표범|scary yellow stripe eatmeat tail
+코끼리|big sound horn
+기린|big yellow stripe tail
+얼룩말|stripe black white tail
+하마|big swim water scary
+코뿔소|big horn scary
+곰|big scary soft brown swim
+북극곰|big scary white soft swim cold winter
+판다|big soft black white cute
+원숭이|-leg4 sound tail cute brown
+고릴라|-leg4 big black scary
+캥거루|tail brown
+코알라|cute soft tree
+여우|tail eatmeat ~red cute
+늑대|scary eatmeat sound tail night
+사슴|horn brown
+낙타|big ride brown
+너구리|tail brown night
+다람쥐|-zoo tiny cute tail brown tree
+쥐|-zoo tiny tail ~house ~scary
+고슴도치|~pet tiny sharp cute
+두더지|-zoo tiny brown
+박쥐|-leg4 fly wing black night scary
+나무늘보|tree cute
+
+@A mam fish swim water wild
+고래|big sound blue
+돌고래|cute sound ~zoo blue
+물개/바다표범|~zoo cute leg4
+
+@A bird wing outdoor
+닭|farm sound white
+병아리|farm tiny cute yellow sound
+오리|farm swim water fly sound ~yellow
+펭귄|zoo swim water black white cold winter cute
+독수리|fly wild scary sky eatmeat
+비둘기|fly sky sound
+참새|fly tiny sky sound brown
+까치|fly sky sound black white
+앵무새|fly pet sound green ~red house
+부엉이/올빼미|fly wild night brown eatmeat
+타조|big zoo
+백조|fly swim water white
+공작|zoo blue green
+갈매기|fly water sky white sound
+홍학/플라밍고|zoo pink water
+
+@A fish swim water wild
+상어|big scary eatmeat
+금붕어|-wild pet tiny red house
+문어|soft ~red ~food
+오징어|soft white ~food
+해파리|soft scary
+꽃게/게|sharp ~red ~food
+새우|tiny ~red ~food
+조개|tiny ~food
+불가사리|~red
+고등어|~food blue
+연어|~food pink
+복어|round scary
+
+@A reptile wild outdoor
+거북이|swim water ~pet green leg4
+개구리|tiny green sound swim water leg4
+뱀|scary ~green
+악어|big scary swim water green leg4 eatmeat tail
+도마뱀|leg4 tiny tail ~pet green
+공룡|big scary tail ~green leg4 ~eatmeat
+
+@A bug tiny outdoor wild
+나비|fly wing ~yellow
+꿀벌/벌|fly wing scary yellow black sound
+개미|black
+모기|fly wing sound house scary summer night
+파리|fly wing black house sound
+잠자리|fly wing
+매미|fly wing sound summer tree
+무당벌레|red black cute
+바퀴벌레|house scary brown
+사슴벌레/장수풍뎅이|horn black ~pet
+반딧불이|fly wing light night
+거미|~bug scary black ~house
+달팽이|~bug soft
+지렁이|~bug soft brown
+
+@P outdoor
+해바라기|flower yellow summer ~big
+장미|flower red sharp
+튤립|flower ~red
+벚꽃|flower pink tree
+민들레|flower yellow tiny
+무궁화|flower pink
+선인장|green sharp ~house
+나무|green big tree
+소나무|green big tree winter
+대나무|green big tree ~food
+네잎클로버|green tiny
+잔디/풀|green
+버섯|~food brown tiny
+단풍잎/낙엽|tree red tiny
+
+@nature outdoor
+해/태양|round hot yellow big sky light summer
+달|round yellow big sky light night
+별|sky light yellow night ~tiny
+구름|white soft big sky
+무지개|big sky
+비|sky water cold
+눈|white cold winter sky soft
+번개/천둥|sky light scary sound
+바람|sky ~cold sound
+불|hot red light scary
+얼음|cold water white winter
+돌/바위|~carry brown
+모래|yellow summer
+지구|round big blue
+화산|big hot red scary place
+바다|place water big blue swim summer
+산|place big green
+강|place water big
+섬|place water
+
+@place
+학교|building school
+병원|building sick help white
+집|building house
+놀이공원/놀이동산|outdoor toy kids big
+동물원|outdoor kids
+수영장|water swim summer sport
+도서관|building school paper
+공항|building fly big
+편의점|building food night
+마트/시장|building food
+영화관/극장|building screen sound night
+공원|outdoor green
+놀이터|outdoor toy kids
+경찰서|building help
+찜질방|building hot
+화장실|building house water clean bath
+교실|school building -building sit
+캠핑장|outdoor night
+
+@job liv human
+의사|sick help white ~school
+간호사|sick help white
+경찰관|help uniform road
+소방관|help uniform red hot
+선생님|school help
+요리사/셰프|food kitchen white
+군인|uniform help green
+가수|music sound
+축구선수|sport ball uniform outdoor kick
+야구선수|sport ball uniform outdoor
+유튜버|screen
+농부|outdoor farm green
+우주비행사|sky fly uniform
+택배기사|road ride
+미용사|sharp
+대통령|help
+화가|write
+과학자|white school
+마술사|magic
+
+@char
+뽀로로|kids ~ani bird kr blue cute
+피카츄|jp game kids cute yellow ~ani
+짱구|jp kids human
+도라에몽|jp kids blue round magic ~ani
+미키마우스|disney kids ~ani black cute
+엘사|disney kids human magic cold winter blue
+곰돌이 푸|disney kids ~ani yellow soft cute
+백설공주|disney human kids
+스파이더맨|hero human red blue magic
+아이언맨|hero human red yellow metal fly
+슈퍼맨|hero human fly blue red magic
+배트맨|hero human black night
+해리포터|human magic ~kids
+마리오/슈퍼마리오|game jp kids human red
+헬로키티|jp kids cute white ~ani pink
+둘리|kr kids ~ani green cute
+손오공|jp human magic fly
+코난|jp human kids help
+라이언|kr cute yellow ~ani
+산타클로스|-char human red white winter magic kids
+티니핑|kr kids pink magic cute
+아기상어|kr kids yellow fish ~ani music sound water
+핑크퐁|kr kids pink cute ~ani music sound
+타요|kr kids ride wheel road blue
+토토로|jp cute soft big ~ani
+마인크래프트 스티브|game human
+
+@F fruit sweet
+사과|red round carry snack
+바나나|yellow carry snack peel
+수박|green round cold summer
+딸기|red tiny snack
+포도|round ~green
+귤|yellow round tiny carry snack peel winter
+오렌지|yellow round peel western
+복숭아|round soft pink summer
+배(과일)|round yellow peel
+감|yellow round
+참외|yellow summer
+키위|green brown sour
+망고|yellow soft
+파인애플|yellow sharp sour
+레몬|-sweet yellow sour
+체리|red tiny
+블루베리|tiny blue
+멜론|green round
+
+@F veg
+당근|~red
+감자|round brown ~hot
+고구마|sweet hot winter peel
+양파|round white
+고추|spicy red ~green ~kfood
+옥수수|yellow sweet ~snack hot summer
+오이|green summer cold
+토마토|red round ~fruit
+배추|green white kfood
+마늘|white tiny kfood ~spicy
+파|green ~spicy
+콩|tiny
+브로콜리|green tree
+
+@F kfood meal
+김치|-meal spicy red
+떡볶이|-meal spicy red snack hot soft rice
+비빔밥|hot ~spicy rice
+김밥|carry black rice
+불고기|meat hot sweet ~grill
+삼겹살|meat hot grill
+갈비|meat hot sweet grill
+된장찌개|hot soup brown
+김치찌개|hot soup spicy red
+삼계탕|hot soup meat summer white
+떡국|hot soup rice white winter
+냉면|noodle cold soup summer
+국밥|hot soup rice meat
+족발|meat deliv
+순대|meat snack hot
+잡채|noodle
+미역국|soup hot
+죽|rice hot soft sick
+어묵/오뎅|hot soup seafood ~snack
+라면|-kfood ~kfood noodle hot spicy soup
+호떡|-meal snack sweet hot winter bread
+떡|-meal snack sweet soft white rice
+붕어빵|-meal snack sweet hot winter bread carry
+팥빙수/빙수|-meal snack sweet cold summer
+
+@F meal
+치킨|fried meat hot deliv snack ~kfood
+피자|round hot deliv bread western
+햄버거|meat bread western carry round
+스파게티/파스타|noodle western
+돈가스|fried meat ~jp
+짜장면|noodle hot black chn deliv
+짬뽕|noodle hot spicy red soup chn deliv seafood
+탕수육|fried meat chn deliv sweet
+만두|hot meat ~chn
+마라탕|chn hot spicy soup red
+초밥|cold seafood jp rice
+우동|noodle soup jp hot
+카레|hot rice yellow ~spicy
+스테이크|meat western hot grill
+샌드위치|bread western carry
+핫도그|snack bread meat carry fried western
+샐러드|green cold western
+계란/달걀|-meal round white tiny kitchen
+
+@F snack sweet
+아이스크림|cold soft summer
+초콜릿|brown carry tiny
+사탕|tiny carry round mouth
+케이크|soft round bread white
+과자|carry
+젤리|soft tiny
+솜사탕|soft pink white
+팝콘|-sweet ~sweet white
+도넛|round bread fried
+마카롱|round tiny western
+쿠키|round bread brown
+껌|tiny mouth
+빵/식빵|bread soft ~meal -sweet ~sweet
+
+@F drink
+우유|white cold
+커피|hot brown ~cold
+콜라|sweet cold brown
+주스|sweet cold ~fruit
+물|cold water
+녹차/차(마시는 차)|hot
+요구르트|sweet white tiny
+
+@T elec house
+냉장고|kitchen big cold white
+텔레비전/TV/티비|screen sound black
+세탁기|big white sound water clean
+전자레인지|kitchen hot
+에어컨|cold white summer
+선풍기|summer round
+청소기|clean sound
+밥솥|kitchen hot white
+드라이기|hot sound bath
+컴퓨터|screen ~school
+전구/형광등|round light glass
+
+@T elec carry
+스마트폰/휴대폰/핸드폰|screen sound black
+노트북|screen ~school black
+태블릿/아이패드|screen
+리모컨|house black
+카메라|screen black
+이어폰|wear tiny sound white pair
+손전등|light
+게임기|screen toy game
+시계|-elec ~elec round ~wear sound
+
+@T house
+침대|big soft sit night
+소파|big soft sit
+의자|sit ~school
+책상|school
+베개|soft white sit
+이불|soft winter
+거울|bath glass
+칫솔|bath tiny carry clean mouth
+치약|bath clean tiny carry white mouth
+비누|bath clean tiny carry
+수건|bath soft clean carry white
+휴지|white soft paper bath clean carry
+문|big
+창문|big glass
+쓰레기통|clean
+빗자루|clean carry
+양초|hot light white
+
+@T kitchen house carry
+숟가락|metal tiny mouth
+젓가락|metal mouth pair
+포크|metal sharp western mouth
+칼|metal sharp scary
+냄비|metal hot round
+프라이팬|metal hot round black
+컵|round
+접시|round white
+
+@T wear carry
+안경|tiny glass ~pair
+모자|soft outdoor ~round
+신발/운동화|outdoor pair
+양말|soft tiny pair
+장갑|soft winter pair
+목도리|soft winter
+마스크|white soft tiny mouth
+반지|metal tiny round
+옷/티셔츠|soft
+가방|~wear school
+
+@T carry
+우산|outdoor water
+열쇠|metal tiny
+동전|metal tiny round
+돈/지폐|paper tiny
+종이|paper white
+편지|paper write
+상자/택배상자|paper brown
+망치|metal
+돋보기|round
+
+@T school carry
+연필|tiny yellow write
+지우개|tiny soft white
+볼펜|write tiny
+가위|metal tiny sharp
+풀(문구)|tiny white
+공책/노트|paper write
+책|paper house
+크레파스/색연필|write kids tiny
+칠판|-carry green big write
+필통|tiny
+
+@T toy kids carry
+인형|soft cute
+로봇|metal ~elec
+레고/블록|tiny
+풍선|soft round ~red
+연|fly sky outdoor
+팽이|round tiny
+퍼즐|paper
+비눗방울|round water outdoor
+
+@T sport outdoor
+축구공|ball round white black carry kick
+야구공|ball round white tiny carry
+농구공|ball round brown carry
+야구방망이|carry brown
+줄넘기|carry
+스키|winter cold
+수영복|wear swim water summer
+
+@T music sound
+피아노|house big black white
+기타|~carry brown
+북|round
+바이올린|carry brown
+리코더|school carry tiny mouth
+
+@T ride wheel road outdoor metal
+자전거|sport twowheel
+킥보드|~elec ~carry ~twowheel
+자동차/차|big sound ~elec
+버스|big sound many
+택시|sound
+트럭|big sound
+소방차|big red sound help
+경찰차|sound help
+구급차|white sound sick help
+오토바이|sound twowheel
+
+@T ride big metal outdoor sound
+기차/KTX|wheel ~elec many
+지하철|-outdoor wheel elec many
+비행기|fly wing sky many
+헬리콥터|fly sky
+배(타는 배)/선박|water many
+잠수함|water scary
+로켓|-ride ~ride fly sky scary
+유모차|-big -metal -sound wheel kids

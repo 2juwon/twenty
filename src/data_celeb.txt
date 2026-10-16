@@ -1,0 +1,235 @@
+# 스무고개 '연예인' 데이터 (2026년 중반 기준으로 잘 안 바뀌는 사실만)
+# b70/b80/b90/b00 = 그 해 이후 출생
+
+?male 남자인가요?
+?korean 한국 사람인가요?
+?foreignborn 외국에서 태어났나요?
+?b70 1970년 이후에 태어났나요?
+?b80 1980년 이후에 태어났나요?
+?b90 1990년 이후에 태어났나요?
+?b00 2000년 이후에 태어났나요?
+?era90 1990년대에 이미 유명했나요?
+?singer 가수인가요?
+?idol 아이돌 출신인가요?
+?group 그룹(밴드) 멤버인가요? (예전 포함)
+?leader 그룹의 리더인가요?
+?youngest 그룹의 막내인가요?
+?rapper 랩을 하나요?
+?solo 솔로 가수로도 활동하나요?
+?ballad 발라드로 유명한가요?
+?trot 트로트 가수인가요?
+?dance 춤으로 특히 유명한가요?
+?producer 작곡이나 프로듀싱을 하나요?
+?sm SM 엔터테인먼트 소속(출신)인가요?
+?yg YG 엔터테인먼트 소속(출신)인가요?
+?jyp JYP 엔터테인먼트 소속(출신)인가요?
+?hybe 하이브(빅히트) 소속(출신)인가요?
+?bts BTS 멤버인가요?
+?blackpink 블랙핑크 멤버인가요?
+?actor 배우인가요?
+?drama 드라마로 유명한가요?
+?movie 영화로 유명한가요?
+?hollywood 할리우드(미국) 작품에 나왔나요?
+?squid '오징어 게임'에 나왔나요?
+?crash 드라마 '사랑의 불시착'에 나왔나요?
+?director 영화감독인가요?
+?comedian 개그맨(코미디언) 출신인가요?
+?mc 예능 프로그램 진행(MC)을 자주 하나요?
+?mudo '무한도전'에 나왔나요?
+?runningman '런닝맨' 고정 멤버인가요? (예전 포함)
+?radio 라디오 DJ로 유명한가요?
+?youtube 유튜브나 인터넷 방송으로 유명한가요?
+?webtoon 웹툰 작가 출신인가요?
+?travel 여행 콘텐츠로 유명한가요?
+?food 음식이나 요리와 관련 있나요?
+?ceo 회사(기획사·사업)를 운영하나요?
+?sports 운동선수인가요? (은퇴 포함)
+?soccer 축구 선수인가요?
+?baseball 야구 선수인가요?
+?olympic 올림픽 메달리스트인가요?
+?game 게임과 관련 있나요?
+?world 해외에서도 아주 유명한가요?
+?abroad 주로 해외에서 활동하나요?
+?europe 유럽 출신인가요?
+?onenight '1박 2일'에 나왔나요?
+?nahonsan '나 혼자 산다'에 고정으로 나왔나요?
+?sibling 형제·자매도 연예인인가요?
+?audition 오디션 프로그램으로 유명해졌나요?
+?oscar 아카데미(오스카) 상을 받았나요?
+?boys '꽃보다 남자'에 나왔나요?
+?star '별에서 온 그대'에 나왔나요?
+?sun '태양의 후예'에 나왔나요?
+?itaewon '이태원 클라쓰'에 나왔나요?
+?reply '응답하라' 시리즈에 나왔나요?
+?seonjae '선재 업고 튀어'에 나왔나요?
+?moving '무빙'에 나왔나요?
+?glory '더 글로리'에 나왔나요?
+?woo '이상한 변호사 우영우'에 나왔나요?
+?sunshine '미스터 션샤인'에 나왔나요?
+?goblin '도깨비'에 나왔나요?
+?queen '눈물의 여왕'에 나왔나요?
+?couple '부부의 세계'에 나왔나요?
+?dp 'D.P.'에 나왔나요?
+?badminton 배드민턴 선수인가요?
+?pingpong 탁구 선수인가요?
+?volley 배구 선수인가요?
+
+@korean male comedian mc
+유재석|b70 mudo runningman ~era90
+강호동|b70 ~sports ~food era90 onenight
+신동엽|b70 era90
+박명수|b70 mudo radio ~era90
+이경규|era90
+김구라|b70 ~youtube
+이수근|b70 onenight
+지석진|runningman era90
+정준하|b70 mudo food
+정형돈|b70 mudo
+노홍철|-comedian b70 mudo
+조세호|b80 ~mudo
+양세형|b80 sibling
+@korean comedian mc
+이영자|food era90
+박나래|b80 nahonsan
+김숙|b70
+송은이|b70 ceo
+장도연|b80
+
+@korean male mc
+전현무|b70 nahonsan
+서장훈|b70 sports era90
+안정환|b70 sports soccer era90
+기안84|b80 webtoon youtube ~travel nahonsan
+이승기|b80 singer solo ballad actor drama onenight
+
+@korean male actor
+송강호|movie ~world era90
+이병헌|movie drama hollywood squid world era90 b70 sunshine
+마동석|b70 movie hollywood
+이정재|b70 movie drama squid world ~director era90
+정우성|b70 movie era90
+황정민|b70 movie
+하정우|b70 movie ~director
+공유|b70 drama movie squid goblin
+현빈|b80 drama movie crash
+조인성|b80 drama movie moving
+이민호|b80 drama boys ~hollywood
+김수현|b80 drama star queen
+송중기|b80 drama movie sun
+박서준|b80 drama itaewon hollywood
+박보검|b80 b90 drama reply
+정해인|b80 drama dp
+변우석|b80 b90 drama seonjae
+이광수|b80 runningman ~drama
+차은우|b80 b90 drama idol group singer
+
+@korean actor
+윤여정|movie hollywood ~world oscar
+김혜수|b70 movie drama era90
+전지현|b80 drama movie ~era90 star
+송혜교|b80 drama sun glory
+손예진|b80 drama movie crash
+송지효|b80 runningman
+김태리|b80 b90 drama movie sunshine
+박은빈|b80 b90 drama woo
+김고은|b80 b90 movie drama goblin
+김지원|b80 b90 drama queen
+한소희|b80 b90 drama couple
+고윤정|b80 b90 drama moving
+정호연|b80 b90 squid ~hollywood ~world
+
+@korean singer
+아이유|b80 b90 solo ballad actor drama ~world
+이효리|b70 idol group solo era90 ~mc
+임영웅|male b80 b90 solo trot ballad audition
+이찬원|male b90 b80 solo trot mc audition
+장윤정|b80 solo trot
+송가인|b80 solo trot audition
+나훈아|male solo trot era90
+조용필|male solo era90
+서태지|male b70 group leader solo producer era90
+싸이|male b70 solo dance world ceo producer
+박진영|male b70 solo dance jyp ceo producer era90
+방시혁|-singer male b70 hybe ceo producer
+성시경|male b70 solo ballad food youtube ~radio
+박효신|male b80 solo ballad
+장범준|male b80 group solo producer
+김종국|male b70 group solo runningman ~youtube era90
+하하|male b70 mudo runningman mc ~rapper
+비/정지훈|male b80 solo dance actor jyp ~hollywood
+보아|b80 solo dance sm ~world
+
+@korean singer idol group
+지드래곤/GD|male b80 yg leader rapper solo producer world
+태연|b80 sm leader solo ballad
+윤아|b80 b90 sm actor drama
+유노윤호|male b80 sm leader dance
+태민|male b90 b80 sm youngest dance solo
+백현|male b90 b80 sm solo
+디오/도경수|male b90 b80 sm actor movie drama
+수지|b90 b80 jyp actor drama
+나연|b90 b80 jyp solo ~audition
+쯔위|-korean foreignborn b90 b80 jyp youngest ~audition
+지코|male b90 b80 leader rapper solo producer
+화사|b90 b80 solo ~rapper
+강다니엘|male b90 b80 solo dance audition
+이찬혁|male b90 b80 ~yg producer sibling audition
+카리나|b00 b90 b80 sm leader dance ~world
+윈터|b00 b90 b80 sm
+장원영|b00 b90 b80 ~world audition
+안유진|b00 b90 b80 leader ~mc audition
+김채원|b00 b90 b80 hybe leader audition
+하니|-korean foreignborn b00 b90 b80 ~hybe ~world
+
+@korean singer idol group bts hybe world solo male b80 b90
+RM|leader rapper producer
+진|
+슈가|rapper producer
+제이홉|rapper dance
+지민|dance
+뷔|~actor
+정국|youngest
+
+@korean singer idol group blackpink yg world solo b80 b90
+제니|rapper
+지수|actor drama
+로제|foreignborn
+리사|-korean foreignborn rapper dance youngest
+
+@korean male sports
+손흥민|b80 b90 soccer abroad world
+이강인|b80 b90 b00 soccer abroad ~world
+김민재|b80 b90 soccer abroad
+박지성|b80 soccer ~abroad ~world
+류현진|b80 baseball olympic ~abroad
+이정후|b80 b90 baseball abroad
+박태환|b80 olympic
+페이커|-sports b80 b90 game world
+@korean sports
+김연아|b80 b90 olympic world
+김연경|b80 ~abroad volley
+장미란|b80 olympic
+안세영|b80 b90 b00 olympic badminton
+신유빈|b80 b90 b00 olympic pingpong
+박세리|b70 ~abroad mc era90
+
+@korean male
+봉준호|director movie world oscar
+박찬욱|director movie world
+백종원|food ceo mc
+안성재|b80 food
+침착맨|b80 youtube webtoon ~game
+곽튜브|b90 b80 youtube travel
+빠니보틀|b80 youtube travel
+@korean
+쯔양|b90 b80 youtube food
+
+@abroad foreignborn world
+오타니 쇼헤이|male sports baseball b80 b90
+리오넬 메시|male sports soccer b80
+크리스티아누 호날두|male sports soccer b80 europe
+테일러 스위프트|singer solo b80
+저스틴 비버|male singer solo b80 b90
+톰 크루즈|male actor movie hollywood era90
+레오나르도 디카프리오|male actor movie hollywood b70 era90 oscar
+일론 머스크|male ceo b70

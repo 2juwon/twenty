@@ -66,6 +66,7 @@ form{display:flex;flex-direction:column;gap:10px}
 .seg{display:inline-flex;align-self:flex-start;border:1.5px solid var(--line);border-radius:999px;padding:3px;gap:2px}
 .seg-b{border:none;border-radius:999px;padding:7px 16px;font-size:.95rem;color:var(--muted)}
 .seg-b[aria-pressed="true"]{background:var(--ink);color:var(--bg)}
+.extra{font-size:.75rem;color:var(--accent-ink);background:var(--accent);border-radius:999px;padding:1px 8px;margin-left:4px}
 .peak-now{animation:pulse 1.6s ease-in-out infinite}
 @keyframes pulse{50%{r:7}}
 .fade{animation:fade .25s ease}
@@ -83,324 +84,173 @@ form{display:flex;flex-direction:column;gap:10px}
   <main class="card fade" id="card"></main>
 </div>
 
+
 <script>
 (function(){
-const Q_ALL = {
-  liv:'살아 있는 생물인가요?', ani:'동물인가요?', mam:'털이 난 포유류인가요?', bird:'새인가요?',
-  sea:'물속이나 물 위에서 지내나요?', bug:'곤충이나 벌레인가요?', pet:'집에서 반려동물로 키우나요?',
-  farm:'농장에서 기르나요?', wild:'야생에 사나요?', big:'사람보다 큰가요?',
-  tiny:'손바닥에 올라갈 만큼 작나요?', leg4:'다리가 네 개인가요?', fly:'하늘을 날 수 있나요?',
-  scary:'위험하거나 무섭게 느껴지나요?', plant:'식물인가요?', food:'먹을 수 있나요?',
-  fruit:'과일인가요?', veg:'채소인가요?', sweet:'단맛이 나나요?', spicy:'매운 편인가요?',
-  kfood:'한국 음식인가요?', noodle:'면 요리인가요?', meal:'끼니(식사)로 먹나요?',
-  snack:'간식이나 디저트인가요?', drink:'마시는 것인가요?', cold:'차갑거나 차갑게 먹나요?',
-  hot:'뜨겁거나 뜨겁게 먹나요?', thing:'사람이 만든 물건인가요?', elec:'전기나 배터리가 필요한가요?',
-  screen:'화면이 달려 있나요?', ride:'사람이 탈 수 있나요?', wheel:'바퀴가 있나요?',
-  road:'도로 위를 다니나요?', house:'집 안에서 흔히 볼 수 있나요?', kitchen:'부엌에서 쓰나요?',
-  wear:'몸에 입거나 착용하나요?', carry:'한 손으로 들 수 있나요?', school:'학교나 공부할 때 쓰나요?',
-  sport:'운동이나 스포츠와 관련 있나요?', music:'음악을 연주하는 것인가요?', round:'둥근 모양인가요?',
-  red:'주로 빨간색인가요?', yellow:'주로 노란색인가요?', green:'주로 초록색인가요?',
-  white:'주로 흰색인가요?', black:'주로 검은색인가요?', metal:'금속으로 되어 있나요?',
-  soft:'만지면 말랑하거나 푹신한가요?', outdoor:'주로 바깥에 있나요?', sound:'소리를 내나요?',
-  sky:'하늘에서 볼 수 있나요?', wing:'날개가 있나요?', soup:'국물이 있나요?', walk:'산책을 시키나요?'
+const DATA = {"all":{"q":{"liv":"살아 있는 생물인가요?","ani":"동물인가요?","plant":"식물인가요?","food":"먹을 수 있나요?","thing":"사람이 만든 물건인가요?","place":"장소인가요?","job":"직업인가요?","char":"만화·영화·게임 속 캐릭터인가요?","nature":"자연에 있는 것(자연 현상)인가요?","mam":"털이 난 포유류인가요?","bird":"새인가요?","fish":"물고기나 바다 생물인가요?","bug":"곤충이나 벌레인가요?","reptile":"파충류나 양서류인가요?","pet":"집에서 반려동물로 키우나요?","farm":"농장에서 기르나요?","wild":"야생에 사나요?","zoo":"동물원에서 볼 수 있나요?","big":"사람보다 큰가요?","tiny":"손바닥에 올라갈 만큼 작나요?","leg4":"다리가 네 개인가요?","fly":"하늘을 날 수 있나요?","wing":"날개가 있나요?","swim":"헤엄을 칠 수 있나요?","scary":"위험하거나 무섭게 느껴지나요?","horn":"뿔이나 엄니(긴 이빨)가 있나요?","tail":"꼬리가 눈에 띄나요?","stripe":"줄무늬나 점무늬가 있나요?","eatmeat":"다른 동물을 잡아먹나요?","cute":"귀엽다는 말을 많이 듣나요?","walk":"산책을 시키나요?","night":"밤과 관련 있나요?","flower":"꽃인가요?","tree":"나무와 관련 있나요?","sky":"하늘에서 볼 수 있나요?","water":"물과 관련 있나요?","summer":"여름과 관련 있나요?","winter":"겨울과 관련 있나요?","fruit":"과일인가요?","veg":"채소인가요?","sweet":"단맛이 나나요?","sour":"신맛이 나나요?","spicy":"매운 편인가요?","kfood":"한국 음식인가요?","chn":"중국 음식인가요?","jp":"일본에서 왔나요?","western":"서양에서 온 것인가요?","noodle":"면 요리인가요?","rice":"밥이나 쌀로 만드나요?","bread":"밀가루로 만드나요?","meat":"고기가 들어가나요?","seafood":"해산물이 들어가나요?","fried":"기름에 튀기나요?","soup":"국물이 있나요?","meal":"끼니(식사)로 먹나요?","snack":"간식이나 디저트인가요?","deliv":"배달로 많이 시켜 먹나요?","drink":"마시는 것인가요?","peel":"껍질을 벗기거나 까서 먹나요?","cold":"차갑거나 차갑게 먹나요?","hot":"뜨겁거나 뜨겁게 먹나요?","elec":"전기나 배터리가 필요한가요?","screen":"화면이 달려 있나요?","light":"빛을 내나요?","ride":"사람이 탈 수 있나요?","wheel":"바퀴가 있나요?","road":"도로 위를 다니나요?","house":"집 안에서 흔히 볼 수 있나요?","kitchen":"부엌에서 쓰나요?","bath":"욕실(화장실)에서 쓰나요?","clean":"씻거나 청소할 때 쓰나요?","wear":"몸에 입거나 착용하나요?","carry":"한 손으로 들 수 있나요?","school":"학교나 공부와 관련 있나요?","write":"글씨를 쓰거나 그림 그릴 때 쓰나요?","paper":"종이로 되어 있나요?","sit":"앉거나 누울 때 쓰나요?","sport":"운동이나 스포츠와 관련 있나요?","ball":"공인가요?","toy":"장난감이나 놀이와 관련 있나요?","music":"음악을 연주하는 것인가요?","metal":"금속으로 되어 있나요?","soft":"만지면 말랑하거나 푹신한가요?","sharp":"뾰족하거나 날카로운가요?","round":"둥근 모양인가요?","building":"건물인가요?","sick":"아프거나 다쳤을 때와 관련 있나요?","help":"사람을 돕거나 지켜 주나요?","uniform":"제복이나 유니폼을 입나요?","human":"사람 모습인가요?","kids":"어린이들이 특히 좋아하나요?","magic":"마법이나 초능력을 쓰나요?","hero":"슈퍼히어로인가요?","disney":"디즈니와 관련 있나요?","kr":"한국에서 만들어졌나요?","game":"게임과 관련 있나요?","outdoor":"주로 바깥에 있나요?","sound":"소리를 내나요?","red":"주로 빨간색인가요?","yellow":"주로 노란색인가요?","green":"주로 초록색인가요?","blue":"주로 파란색인가요?","white":"주로 흰색인가요?","black":"주로 검은색인가요?","brown":"주로 갈색인가요?","pink":"주로 분홍색인가요?","kick":"발로 차거나 발을 많이 쓰나요?","grill":"불판에 구워 먹나요?","mouth":"입에 넣거나 입과 관련 있나요?","glass":"유리로 되어 있나요?","pair":"두 개가 한 쌍인가요?","many":"여러 사람이 함께 타나요?","twowheel":"바퀴가 두 개인가요?"},"items":[{"n":"강아지","a":["개","멍멍이"],"v":{"liv":1,"ani":1,"mam":1,"pet":1,"house":1,"cute":1,"soft":1,"leg4":1,"walk":1,"sound":1,"tail":1,"swim":1,"brown":0.5,"white":0.5}},{"n":"고양이","a":["냥이"],"v":{"liv":1,"ani":1,"mam":1,"pet":1,"house":1,"cute":1,"soft":1,"leg4":1,"sound":1,"tail":1,"eatmeat":1,"night":0.5,"black":0.5}},{"n":"햄스터","a":[],"v":{"liv":1,"ani":1,"mam":1,"pet":1,"house":1,"cute":1,"soft":1,"leg4":1,"tiny":1,"brown":0.5}},{"n":"토끼","a":[],"v":{"liv":1,"ani":1,"mam":1,"pet":1,"house":1,"cute":1,"soft":1,"leg4":1,"white":1,"farm":0.5,"tiny":0.5}},{"n":"기니피그","a":[],"v":{"liv":1,"ani":1,"mam":1,"pet":1,"house":1,"cute":1,"soft":1,"leg4":1,"tiny":0.5,"brown":1}},{"n":"소","a":["젖소"],"v":{"liv":1,"ani":1,"mam":1,"farm":1,"outdoor":1,"leg4":1,"sound":1,"big":1,"horn":1,"tail":1,"black":0.5,"white":0.5}},{"n":"돼지","a":[],"v":{"liv":1,"ani":1,"mam":1,"farm":1,"outdoor":1,"leg4":1,"sound":1,"pink":1,"tail":1}},{"n":"말","a":[],"v":{"liv":1,"ani":1,"mam":1,"farm":1,"outdoor":1,"leg4":1,"sound":1,"big":1,"ride":1,"tail":1,"sport":0.5,"brown":0.5}},{"n":"양","a":[],"v":{"liv":1,"ani":1,"mam":1,"farm":1,"outdoor":1,"leg4":1,"sound":1,"soft":1,"white":1,"cute":1}},{"n":"염소","a":[],"v":{"liv":1,"ani":1,"mam":1,"farm":1,"outdoor":1,"leg4":1,"sound":1,"horn":1,"white":1}},{"n":"당나귀","a":[],"v":{"liv":1,"ani":1,"mam":1,"farm":1,"outdoor":1,"leg4":1,"sound":1,"ride":1,"big":0.5,"brown":1}},{"n":"사자","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"scary":1,"sound":1,"yellow":1,"eatmeat":1,"tail":1}},{"n":"호랑이","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"scary":1,"sound":1,"yellow":1,"black":1,"stripe":1,"eatmeat":1,"tail":1}},{"n":"치타","a":["표범"],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"scary":1,"yellow":1,"stripe":1,"eatmeat":1,"tail":1}},{"n":"코끼리","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"sound":1,"horn":1}},{"n":"기린","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"yellow":1,"stripe":1,"tail":1}},{"n":"얼룩말","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"stripe":1,"black":1,"white":1,"tail":1}},{"n":"하마","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"swim":1,"water":1,"scary":1}},{"n":"코뿔소","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"horn":1,"scary":1}},{"n":"곰","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"scary":1,"soft":1,"brown":1,"swim":1}},{"n":"북극곰","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"scary":1,"white":1,"soft":1,"swim":1,"cold":1,"winter":1}},{"n":"판다","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"soft":1,"black":1,"white":1,"cute":1}},{"n":"원숭이","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"outdoor":1,"sound":1,"tail":1,"cute":1,"brown":1}},{"n":"고릴라","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"outdoor":1,"big":1,"black":1,"scary":1}},{"n":"캥거루","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"tail":1,"brown":1}},{"n":"코알라","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"cute":1,"soft":1,"tree":1}},{"n":"여우","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"tail":1,"eatmeat":1,"red":0.5,"cute":1}},{"n":"늑대","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"scary":1,"eatmeat":1,"sound":1,"tail":1,"night":1}},{"n":"사슴","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"horn":1,"brown":1}},{"n":"낙타","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"big":1,"ride":1,"brown":1}},{"n":"너구리","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"tail":1,"brown":1,"night":1}},{"n":"다람쥐","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"leg4":1,"outdoor":1,"tiny":1,"cute":1,"tail":1,"brown":1,"tree":1}},{"n":"쥐","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"leg4":1,"outdoor":1,"tiny":1,"tail":1,"house":0.5,"scary":0.5}},{"n":"고슴도치","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"pet":0.5,"tiny":1,"sharp":1,"cute":1}},{"n":"두더지","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"leg4":1,"outdoor":1,"tiny":1,"brown":1}},{"n":"박쥐","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"outdoor":1,"fly":1,"wing":1,"black":1,"night":1,"scary":1}},{"n":"나무늘보","a":[],"v":{"liv":1,"ani":1,"mam":1,"wild":1,"zoo":1,"leg4":1,"outdoor":1,"tree":1,"cute":1}},{"n":"고래","a":[],"v":{"liv":1,"ani":1,"mam":1,"fish":1,"swim":1,"water":1,"wild":1,"big":1,"sound":1,"blue":1}},{"n":"돌고래","a":[],"v":{"liv":1,"ani":1,"mam":1,"fish":1,"swim":1,"water":1,"wild":1,"cute":1,"sound":1,"zoo":0.5,"blue":1}},{"n":"물개","a":["바다표범"],"v":{"liv":1,"ani":1,"mam":1,"fish":1,"swim":1,"water":1,"wild":1,"zoo":0.5,"cute":1,"leg4":1}},{"n":"닭","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"farm":1,"sound":1,"white":1}},{"n":"병아리","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"farm":1,"tiny":1,"cute":1,"yellow":1,"sound":1}},{"n":"오리","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"farm":1,"swim":1,"water":1,"fly":1,"sound":1,"yellow":0.5}},{"n":"펭귄","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"zoo":1,"swim":1,"water":1,"black":1,"white":1,"cold":1,"winter":1,"cute":1}},{"n":"독수리","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"wild":1,"scary":1,"sky":1,"eatmeat":1}},{"n":"비둘기","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"sky":1,"sound":1}},{"n":"참새","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"tiny":1,"sky":1,"sound":1,"brown":1}},{"n":"까치","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"sky":1,"sound":1,"black":1,"white":1}},{"n":"앵무새","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"pet":1,"sound":1,"green":1,"red":0.5,"house":1}},{"n":"부엉이","a":["올빼미"],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"wild":1,"night":1,"brown":1,"eatmeat":1}},{"n":"타조","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"big":1,"zoo":1}},{"n":"백조","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"swim":1,"water":1,"white":1}},{"n":"공작","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"zoo":1,"blue":1,"green":1}},{"n":"갈매기","a":[],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"fly":1,"water":1,"sky":1,"white":1,"sound":1}},{"n":"홍학","a":["플라밍고"],"v":{"liv":1,"ani":1,"bird":1,"wing":1,"outdoor":1,"zoo":1,"pink":1,"water":1}},{"n":"상어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"big":1,"scary":1,"eatmeat":1}},{"n":"금붕어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"pet":1,"tiny":1,"red":1,"house":1}},{"n":"문어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"soft":1,"red":0.5,"food":0.5}},{"n":"오징어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"soft":1,"white":1,"food":0.5}},{"n":"해파리","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"soft":1,"scary":1}},{"n":"꽃게","a":["게"],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"sharp":1,"red":0.5,"food":0.5}},{"n":"새우","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"tiny":1,"red":0.5,"food":0.5}},{"n":"조개","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"tiny":1,"food":0.5}},{"n":"불가사리","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"red":0.5}},{"n":"고등어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"food":0.5,"blue":1}},{"n":"연어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"food":0.5,"pink":1}},{"n":"복어","a":[],"v":{"liv":1,"ani":1,"fish":1,"swim":1,"water":1,"wild":1,"round":1,"scary":1}},{"n":"거북이","a":[],"v":{"liv":1,"ani":1,"reptile":1,"wild":1,"outdoor":1,"swim":1,"water":1,"pet":0.5,"green":1,"leg4":1}},{"n":"개구리","a":[],"v":{"liv":1,"ani":1,"reptile":1,"wild":1,"outdoor":1,"tiny":1,"green":1,"sound":1,"swim":1,"water":1,"leg4":1}},{"n":"뱀","a":[],"v":{"liv":1,"ani":1,"reptile":1,"wild":1,"outdoor":1,"scary":1,"green":0.5}},{"n":"악어","a":[],"v":{"liv":1,"ani":1,"reptile":1,"wild":1,"outdoor":1,"big":1,"scary":1,"swim":1,"water":1,"green":1,"leg4":1,"eatmeat":1,"tail":1}},{"n":"도마뱀","a":[],"v":{"liv":1,"ani":1,"reptile":1,"wild":1,"outdoor":1,"leg4":1,"tiny":1,"tail":1,"pet":0.5,"green":1}},{"n":"공룡","a":[],"v":{"liv":1,"ani":1,"reptile":1,"wild":1,"outdoor":1,"big":1,"scary":1,"tail":1,"green":0.5,"leg4":1,"eatmeat":0.5}},{"n":"나비","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1,"yellow":0.5}},{"n":"꿀벌","a":["벌"],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1,"scary":1,"yellow":1,"black":1,"sound":1}},{"n":"개미","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"black":1}},{"n":"모기","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1,"sound":1,"house":1,"scary":1,"summer":1,"night":1}},{"n":"파리","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1,"black":1,"house":1,"sound":1}},{"n":"잠자리","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1}},{"n":"매미","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1,"sound":1,"summer":1,"tree":1}},{"n":"무당벌레","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"red":1,"black":1,"cute":1}},{"n":"바퀴벌레","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"house":1,"scary":1,"brown":1}},{"n":"사슴벌레","a":["장수풍뎅이"],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"horn":1,"black":1,"pet":0.5}},{"n":"반딧불이","a":[],"v":{"liv":1,"ani":1,"bug":1,"tiny":1,"outdoor":1,"wild":1,"fly":1,"wing":1,"light":1,"night":1}},{"n":"거미","a":[],"v":{"liv":1,"ani":1,"bug":0.5,"tiny":1,"outdoor":1,"wild":1,"scary":1,"black":1,"house":0.5}},{"n":"달팽이","a":[],"v":{"liv":1,"ani":1,"bug":0.5,"tiny":1,"outdoor":1,"wild":1,"soft":1}},{"n":"지렁이","a":[],"v":{"liv":1,"ani":1,"bug":0.5,"tiny":1,"outdoor":1,"wild":1,"soft":1,"brown":1}},{"n":"해바라기","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"flower":1,"yellow":1,"summer":1,"big":0.5}},{"n":"장미","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"flower":1,"red":1,"sharp":1}},{"n":"튤립","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"flower":1,"red":0.5}},{"n":"벚꽃","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"flower":1,"pink":1,"tree":1}},{"n":"민들레","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"flower":1,"yellow":1,"tiny":1}},{"n":"무궁화","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"flower":1,"pink":1}},{"n":"선인장","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"green":1,"sharp":1,"house":0.5}},{"n":"나무","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"green":1,"big":1,"tree":1}},{"n":"소나무","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"green":1,"big":1,"tree":1,"winter":1}},{"n":"대나무","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"green":1,"big":1,"tree":1,"food":0.5}},{"n":"네잎클로버","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"green":1,"tiny":1}},{"n":"잔디","a":["풀"],"v":{"liv":1,"plant":1,"outdoor":1,"green":1}},{"n":"버섯","a":[],"v":{"liv":1,"plant":1,"outdoor":1,"food":0.5,"brown":1,"tiny":1}},{"n":"단풍잎","a":["낙엽"],"v":{"liv":1,"plant":1,"outdoor":1,"tree":1,"red":1,"tiny":1}},{"n":"해","a":["태양"],"v":{"nature":1,"outdoor":1,"round":1,"hot":1,"yellow":1,"big":1,"sky":1,"light":1,"summer":1}},{"n":"달","a":[],"v":{"nature":1,"outdoor":1,"round":1,"yellow":1,"big":1,"sky":1,"light":1,"night":1}},{"n":"별","a":[],"v":{"nature":1,"outdoor":1,"sky":1,"light":1,"yellow":1,"night":1,"tiny":0.5}},{"n":"구름","a":[],"v":{"nature":1,"outdoor":1,"white":1,"soft":1,"big":1,"sky":1}},{"n":"무지개","a":[],"v":{"nature":1,"outdoor":1,"big":1,"sky":1}},{"n":"비","a":[],"v":{"nature":1,"outdoor":1,"sky":1,"water":1,"cold":1}},{"n":"눈","a":[],"v":{"nature":1,"outdoor":1,"white":1,"cold":1,"winter":1,"sky":1,"soft":1}},{"n":"번개","a":["천둥"],"v":{"nature":1,"outdoor":1,"sky":1,"light":1,"scary":1,"sound":1}},{"n":"바람","a":[],"v":{"nature":1,"outdoor":1,"sky":1,"cold":0.5,"sound":1}},{"n":"불","a":[],"v":{"nature":1,"outdoor":1,"hot":1,"red":1,"light":1,"scary":1}},{"n":"얼음","a":[],"v":{"nature":1,"outdoor":1,"cold":1,"water":1,"white":1,"winter":1}},{"n":"돌","a":["바위"],"v":{"nature":1,"outdoor":1,"carry":0.5,"brown":1}},{"n":"모래","a":[],"v":{"nature":1,"outdoor":1,"yellow":1,"summer":1}},{"n":"지구","a":[],"v":{"nature":1,"outdoor":1,"round":1,"big":1,"blue":1}},{"n":"화산","a":[],"v":{"nature":1,"outdoor":1,"big":1,"hot":1,"red":1,"scary":1,"place":1}},{"n":"바다","a":[],"v":{"nature":1,"outdoor":1,"place":1,"water":1,"big":1,"blue":1,"swim":1,"summer":1}},{"n":"산","a":[],"v":{"nature":1,"outdoor":1,"place":1,"big":1,"green":1}},{"n":"강","a":[],"v":{"nature":1,"outdoor":1,"place":1,"water":1,"big":1}},{"n":"섬","a":[],"v":{"nature":1,"outdoor":1,"place":1,"water":1}},{"n":"학교","a":[],"v":{"place":1,"building":1,"school":1}},{"n":"병원","a":[],"v":{"place":1,"building":1,"sick":1,"help":1,"white":1}},{"n":"집","a":[],"v":{"place":1,"building":1,"house":1}},{"n":"놀이공원","a":["놀이동산"],"v":{"place":1,"outdoor":1,"toy":1,"kids":1,"big":1}},{"n":"동물원","a":[],"v":{"place":1,"outdoor":1,"kids":1}},{"n":"수영장","a":[],"v":{"place":1,"water":1,"swim":1,"summer":1,"sport":1}},{"n":"도서관","a":[],"v":{"place":1,"building":1,"school":1,"paper":1}},{"n":"공항","a":[],"v":{"place":1,"building":1,"fly":1,"big":1}},{"n":"편의점","a":[],"v":{"place":1,"building":1,"food":1,"night":1}},{"n":"마트","a":["시장"],"v":{"place":1,"building":1,"food":1}},{"n":"영화관","a":["극장"],"v":{"place":1,"building":1,"screen":1,"sound":1,"night":1}},{"n":"공원","a":[],"v":{"place":1,"outdoor":1,"green":1}},{"n":"놀이터","a":[],"v":{"place":1,"outdoor":1,"toy":1,"kids":1}},{"n":"경찰서","a":[],"v":{"place":1,"building":1,"help":1}},{"n":"찜질방","a":[],"v":{"place":1,"building":1,"hot":1}},{"n":"화장실","a":[],"v":{"place":1,"building":1,"house":1,"water":1,"clean":1,"bath":1}},{"n":"교실","a":[],"v":{"place":1,"school":1,"sit":1}},{"n":"캠핑장","a":[],"v":{"place":1,"outdoor":1,"night":1}},{"n":"의사","a":[],"v":{"job":1,"liv":1,"human":1,"sick":1,"help":1,"white":1,"school":0.5}},{"n":"간호사","a":[],"v":{"job":1,"liv":1,"human":1,"sick":1,"help":1,"white":1}},{"n":"경찰관","a":[],"v":{"job":1,"liv":1,"human":1,"help":1,"uniform":1,"road":1}},{"n":"소방관","a":[],"v":{"job":1,"liv":1,"human":1,"help":1,"uniform":1,"red":1,"hot":1}},{"n":"선생님","a":[],"v":{"job":1,"liv":1,"human":1,"school":1,"help":1}},{"n":"요리사","a":["셰프"],"v":{"job":1,"liv":1,"human":1,"food":1,"kitchen":1,"white":1}},{"n":"군인","a":[],"v":{"job":1,"liv":1,"human":1,"uniform":1,"help":1,"green":1}},{"n":"가수","a":[],"v":{"job":1,"liv":1,"human":1,"music":1,"sound":1}},{"n":"축구선수","a":[],"v":{"job":1,"liv":1,"human":1,"sport":1,"ball":1,"uniform":1,"outdoor":1,"kick":1}},{"n":"야구선수","a":[],"v":{"job":1,"liv":1,"human":1,"sport":1,"ball":1,"uniform":1,"outdoor":1}},{"n":"유튜버","a":[],"v":{"job":1,"liv":1,"human":1,"screen":1}},{"n":"농부","a":[],"v":{"job":1,"liv":1,"human":1,"outdoor":1,"farm":1,"green":1}},{"n":"우주비행사","a":[],"v":{"job":1,"liv":1,"human":1,"sky":1,"fly":1,"uniform":1}},{"n":"택배기사","a":[],"v":{"job":1,"liv":1,"human":1,"road":1,"ride":1}},{"n":"미용사","a":[],"v":{"job":1,"liv":1,"human":1,"sharp":1}},{"n":"대통령","a":[],"v":{"job":1,"liv":1,"human":1,"help":1}},{"n":"화가","a":[],"v":{"job":1,"liv":1,"human":1,"write":1}},{"n":"과학자","a":[],"v":{"job":1,"liv":1,"human":1,"white":1,"school":1}},{"n":"마술사","a":[],"v":{"job":1,"liv":1,"human":1,"magic":1}},{"n":"뽀로로","a":[],"v":{"char":1,"kids":1,"ani":1,"bird":1,"kr":1,"blue":1,"cute":1,"liv":1}},{"n":"피카츄","a":[],"v":{"char":1,"jp":1,"game":1,"kids":1,"cute":1,"yellow":1,"ani":0.5,"liv":0.5}},{"n":"짱구","a":[],"v":{"char":1,"jp":1,"kids":1,"human":1}},{"n":"도라에몽","a":[],"v":{"char":1,"jp":1,"kids":1,"blue":1,"round":1,"magic":1,"ani":0.5,"liv":0.5}},{"n":"미키마우스","a":[],"v":{"char":1,"disney":1,"kids":1,"ani":0.5,"black":1,"cute":1,"liv":0.5}},{"n":"엘사","a":[],"v":{"char":1,"disney":1,"kids":1,"human":1,"magic":1,"cold":1,"winter":1,"blue":1}},{"n":"곰돌이 푸","a":[],"v":{"char":1,"disney":1,"kids":1,"ani":0.5,"yellow":1,"soft":1,"cute":1,"liv":0.5}},{"n":"백설공주","a":[],"v":{"char":1,"disney":1,"human":1,"kids":1}},{"n":"스파이더맨","a":[],"v":{"char":1,"hero":1,"human":1,"red":1,"blue":1,"magic":1}},{"n":"아이언맨","a":[],"v":{"char":1,"hero":1,"human":1,"red":1,"yellow":1,"metal":1,"fly":1}},{"n":"슈퍼맨","a":[],"v":{"char":1,"hero":1,"human":1,"fly":1,"blue":1,"red":1,"magic":1}},{"n":"배트맨","a":[],"v":{"char":1,"hero":1,"human":1,"black":1,"night":1}},{"n":"해리포터","a":[],"v":{"char":1,"human":1,"magic":1,"kids":0.5}},{"n":"마리오","a":["슈퍼마리오"],"v":{"char":1,"game":1,"jp":1,"kids":1,"human":1,"red":1}},{"n":"헬로키티","a":[],"v":{"char":1,"jp":1,"kids":1,"cute":1,"white":1,"ani":0.5,"pink":1,"liv":0.5}},{"n":"둘리","a":[],"v":{"char":1,"kr":1,"kids":1,"ani":0.5,"green":1,"cute":1,"liv":0.5}},{"n":"손오공","a":[],"v":{"char":1,"jp":1,"human":1,"magic":1,"fly":1}},{"n":"코난","a":[],"v":{"char":1,"jp":1,"human":1,"kids":1,"help":1}},{"n":"라이언","a":[],"v":{"char":1,"kr":1,"cute":1,"yellow":1,"ani":0.5,"liv":0.5}},{"n":"산타클로스","a":[],"v":{"human":1,"red":1,"white":1,"winter":1,"magic":1,"kids":1}},{"n":"티니핑","a":[],"v":{"char":1,"kr":1,"kids":1,"pink":1,"magic":1,"cute":1}},{"n":"아기상어","a":[],"v":{"char":1,"kr":1,"kids":1,"yellow":1,"fish":1,"ani":1,"music":1,"sound":1,"water":1,"liv":1}},{"n":"핑크퐁","a":[],"v":{"char":1,"kr":1,"kids":1,"pink":1,"cute":1,"ani":0.5,"music":1,"sound":1,"liv":0.5}},{"n":"타요","a":[],"v":{"char":1,"kr":1,"kids":1,"ride":1,"wheel":1,"road":1,"blue":1}},{"n":"토토로","a":[],"v":{"char":1,"jp":1,"cute":1,"soft":1,"big":1,"ani":0.5,"liv":0.5}},{"n":"마인크래프트 스티브","a":[],"v":{"char":1,"game":1,"human":1}},{"n":"사과","a":[],"v":{"food":1,"fruit":1,"sweet":1,"red":1,"round":1,"carry":1,"snack":1}},{"n":"바나나","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"carry":1,"snack":1,"peel":1}},{"n":"수박","a":[],"v":{"food":1,"fruit":1,"sweet":1,"green":1,"round":1,"cold":1,"summer":1}},{"n":"딸기","a":[],"v":{"food":1,"fruit":1,"sweet":1,"red":1,"tiny":1,"snack":1}},{"n":"포도","a":[],"v":{"food":1,"fruit":1,"sweet":1,"round":1,"green":0.5}},{"n":"귤","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"round":1,"tiny":1,"carry":1,"snack":1,"peel":1,"winter":1}},{"n":"오렌지","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"round":1,"peel":1,"western":1}},{"n":"복숭아","a":[],"v":{"food":1,"fruit":1,"sweet":1,"round":1,"soft":1,"pink":1,"summer":1}},{"n":"배(과일)","a":[],"v":{"food":1,"fruit":1,"sweet":1,"round":1,"yellow":1,"peel":1}},{"n":"감","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"round":1}},{"n":"참외","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"summer":1}},{"n":"키위","a":[],"v":{"food":1,"fruit":1,"sweet":1,"green":1,"brown":1,"sour":1}},{"n":"망고","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"soft":1}},{"n":"파인애플","a":[],"v":{"food":1,"fruit":1,"sweet":1,"yellow":1,"sharp":1,"sour":1}},{"n":"레몬","a":[],"v":{"food":1,"fruit":1,"yellow":1,"sour":1}},{"n":"체리","a":[],"v":{"food":1,"fruit":1,"sweet":1,"red":1,"tiny":1}},{"n":"블루베리","a":[],"v":{"food":1,"fruit":1,"sweet":1,"tiny":1,"blue":1}},{"n":"멜론","a":[],"v":{"food":1,"fruit":1,"sweet":1,"green":1,"round":1}},{"n":"당근","a":[],"v":{"food":1,"veg":1,"red":0.5}},{"n":"감자","a":[],"v":{"food":1,"veg":1,"round":1,"brown":1,"hot":0.5}},{"n":"고구마","a":[],"v":{"food":1,"veg":1,"sweet":1,"hot":1,"winter":1,"peel":1}},{"n":"양파","a":[],"v":{"food":1,"veg":1,"round":1,"white":1}},{"n":"고추","a":[],"v":{"food":1,"veg":1,"spicy":1,"red":1,"green":0.5,"kfood":0.5}},{"n":"옥수수","a":[],"v":{"food":1,"veg":1,"yellow":1,"sweet":1,"snack":0.5,"hot":1,"summer":1}},{"n":"오이","a":[],"v":{"food":1,"veg":1,"green":1,"summer":1,"cold":1}},{"n":"토마토","a":[],"v":{"food":1,"veg":1,"red":1,"round":1,"fruit":0.5}},{"n":"배추","a":[],"v":{"food":1,"veg":1,"green":1,"white":1,"kfood":1}},{"n":"마늘","a":[],"v":{"food":1,"veg":1,"white":1,"tiny":1,"kfood":1,"spicy":0.5}},{"n":"파","a":[],"v":{"food":1,"veg":1,"green":1,"spicy":0.5}},{"n":"콩","a":[],"v":{"food":1,"veg":1,"tiny":1}},{"n":"브로콜리","a":[],"v":{"food":1,"veg":1,"green":1,"tree":1}},{"n":"김치","a":[],"v":{"food":1,"kfood":1,"spicy":1,"red":1}},{"n":"떡볶이","a":[],"v":{"food":1,"kfood":1,"spicy":1,"red":1,"snack":1,"hot":1,"soft":1,"rice":1}},{"n":"비빔밥","a":[],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"spicy":0.5,"rice":1}},{"n":"김밥","a":[],"v":{"food":1,"kfood":1,"meal":1,"carry":1,"black":1,"rice":1}},{"n":"불고기","a":[],"v":{"food":1,"kfood":1,"meal":1,"meat":1,"hot":1,"sweet":1,"grill":0.5}},{"n":"삼겹살","a":[],"v":{"food":1,"kfood":1,"meal":1,"meat":1,"hot":1,"grill":1}},{"n":"갈비","a":[],"v":{"food":1,"kfood":1,"meal":1,"meat":1,"hot":1,"sweet":1,"grill":1}},{"n":"된장찌개","a":[],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"soup":1,"brown":1}},{"n":"김치찌개","a":[],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"soup":1,"spicy":1,"red":1}},{"n":"삼계탕","a":[],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"soup":1,"meat":1,"summer":1,"white":1}},{"n":"떡국","a":[],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"soup":1,"rice":1,"white":1,"winter":1}},{"n":"냉면","a":[],"v":{"food":1,"kfood":1,"meal":1,"noodle":1,"cold":1,"soup":1,"summer":1}},{"n":"국밥","a":[],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"soup":1,"rice":1,"meat":1}},{"n":"족발","a":[],"v":{"food":1,"kfood":1,"meal":1,"meat":1,"deliv":1}},{"n":"순대","a":[],"v":{"food":1,"kfood":1,"meal":1,"meat":1,"snack":1,"hot":1}},{"n":"잡채","a":[],"v":{"food":1,"kfood":1,"meal":1,"noodle":1}},{"n":"미역국","a":[],"v":{"food":1,"kfood":1,"meal":1,"soup":1,"hot":1}},{"n":"죽","a":[],"v":{"food":1,"kfood":1,"meal":1,"rice":1,"hot":1,"soft":1,"sick":1}},{"n":"어묵","a":["오뎅"],"v":{"food":1,"kfood":1,"meal":1,"hot":1,"soup":1,"seafood":1,"snack":0.5}},{"n":"라면","a":[],"v":{"food":1,"meal":1,"kfood":0.5,"noodle":1,"hot":1,"spicy":1,"soup":1}},{"n":"호떡","a":[],"v":{"food":1,"kfood":1,"snack":1,"sweet":1,"hot":1,"winter":1,"bread":1}},{"n":"떡","a":[],"v":{"food":1,"kfood":1,"snack":1,"sweet":1,"soft":1,"white":1,"rice":1}},{"n":"붕어빵","a":[],"v":{"food":1,"kfood":1,"snack":1,"sweet":1,"hot":1,"winter":1,"bread":1,"carry":1}},{"n":"팥빙수","a":["빙수"],"v":{"food":1,"kfood":1,"snack":1,"sweet":1,"cold":1,"summer":1}},{"n":"치킨","a":[],"v":{"food":1,"meal":1,"fried":1,"meat":1,"hot":1,"deliv":1,"snack":1,"kfood":0.5}},{"n":"피자","a":[],"v":{"food":1,"meal":1,"round":1,"hot":1,"deliv":1,"bread":1,"western":1}},{"n":"햄버거","a":[],"v":{"food":1,"meal":1,"meat":1,"bread":1,"western":1,"carry":1,"round":1}},{"n":"스파게티","a":["파스타"],"v":{"food":1,"meal":1,"noodle":1,"western":1}},{"n":"돈가스","a":[],"v":{"food":1,"meal":1,"fried":1,"meat":1,"jp":0.5}},{"n":"짜장면","a":[],"v":{"food":1,"meal":1,"noodle":1,"hot":1,"black":1,"chn":1,"deliv":1}},{"n":"짬뽕","a":[],"v":{"food":1,"meal":1,"noodle":1,"hot":1,"spicy":1,"red":1,"soup":1,"chn":1,"deliv":1,"seafood":1}},{"n":"탕수육","a":[],"v":{"food":1,"meal":1,"fried":1,"meat":1,"chn":1,"deliv":1,"sweet":1}},{"n":"만두","a":[],"v":{"food":1,"meal":1,"hot":1,"meat":1,"chn":0.5}},{"n":"마라탕","a":[],"v":{"food":1,"meal":1,"chn":1,"hot":1,"spicy":1,"soup":1,"red":1}},{"n":"초밥","a":[],"v":{"food":1,"meal":1,"cold":1,"seafood":1,"jp":1,"rice":1}},{"n":"우동","a":[],"v":{"food":1,"meal":1,"noodle":1,"soup":1,"jp":1,"hot":1}},{"n":"카레","a":[],"v":{"food":1,"meal":1,"hot":1,"rice":1,"yellow":1,"spicy":0.5}},{"n":"스테이크","a":[],"v":{"food":1,"meal":1,"meat":1,"western":1,"hot":1,"grill":1}},{"n":"샌드위치","a":[],"v":{"food":1,"meal":1,"bread":1,"western":1,"carry":1}},{"n":"핫도그","a":[],"v":{"food":1,"meal":1,"snack":1,"bread":1,"meat":1,"carry":1,"fried":1,"western":1}},{"n":"샐러드","a":[],"v":{"food":1,"meal":1,"green":1,"cold":1,"western":1}},{"n":"계란","a":["달걀"],"v":{"food":1,"round":1,"white":1,"tiny":1,"kitchen":1}},{"n":"아이스크림","a":[],"v":{"food":1,"snack":1,"sweet":1,"cold":1,"soft":1,"summer":1}},{"n":"초콜릿","a":[],"v":{"food":1,"snack":1,"sweet":1,"brown":1,"carry":1,"tiny":1}},{"n":"사탕","a":[],"v":{"food":1,"snack":1,"sweet":1,"tiny":1,"carry":1,"round":1,"mouth":1}},{"n":"케이크","a":[],"v":{"food":1,"snack":1,"sweet":1,"soft":1,"round":1,"bread":1,"white":1}},{"n":"과자","a":[],"v":{"food":1,"snack":1,"sweet":1,"carry":1}},{"n":"젤리","a":[],"v":{"food":1,"snack":1,"sweet":1,"soft":1,"tiny":1}},{"n":"솜사탕","a":[],"v":{"food":1,"snack":1,"sweet":1,"soft":1,"pink":1,"white":1}},{"n":"팝콘","a":[],"v":{"food":1,"snack":1,"sweet":0.5,"white":1}},{"n":"도넛","a":[],"v":{"food":1,"snack":1,"sweet":1,"round":1,"bread":1,"fried":1}},{"n":"마카롱","a":[],"v":{"food":1,"snack":1,"sweet":1,"round":1,"tiny":1,"western":1}},{"n":"쿠키","a":[],"v":{"food":1,"snack":1,"sweet":1,"round":1,"bread":1,"brown":1}},{"n":"껌","a":[],"v":{"food":1,"snack":1,"sweet":1,"tiny":1,"mouth":1}},{"n":"빵","a":["식빵"],"v":{"food":1,"snack":1,"bread":1,"soft":1,"meal":0.5,"sweet":0.5}},{"n":"우유","a":[],"v":{"food":1,"drink":1,"white":1,"cold":1}},{"n":"커피","a":[],"v":{"food":1,"drink":1,"hot":1,"brown":1,"cold":0.5}},{"n":"콜라","a":[],"v":{"food":1,"drink":1,"sweet":1,"cold":1,"brown":1}},{"n":"주스","a":[],"v":{"food":1,"drink":1,"sweet":1,"cold":1,"fruit":0.5}},{"n":"물","a":[],"v":{"food":1,"drink":1,"cold":1,"water":1}},{"n":"녹차","a":["차(마시는 차)"],"v":{"food":1,"drink":1,"hot":1}},{"n":"요구르트","a":[],"v":{"food":1,"drink":1,"sweet":1,"white":1,"tiny":1}},{"n":"냉장고","a":[],"v":{"thing":1,"elec":1,"house":1,"kitchen":1,"big":1,"cold":1,"white":1}},{"n":"텔레비전","a":["TV","티비"],"v":{"thing":1,"elec":1,"house":1,"screen":1,"sound":1,"black":1}},{"n":"세탁기","a":[],"v":{"thing":1,"elec":1,"house":1,"big":1,"white":1,"sound":1,"water":1,"clean":1}},{"n":"전자레인지","a":[],"v":{"thing":1,"elec":1,"house":1,"kitchen":1,"hot":1}},{"n":"에어컨","a":[],"v":{"thing":1,"elec":1,"house":1,"cold":1,"white":1,"summer":1}},{"n":"선풍기","a":[],"v":{"thing":1,"elec":1,"house":1,"summer":1,"round":1}},{"n":"청소기","a":[],"v":{"thing":1,"elec":1,"house":1,"clean":1,"sound":1}},{"n":"밥솥","a":[],"v":{"thing":1,"elec":1,"house":1,"kitchen":1,"hot":1,"white":1}},{"n":"드라이기","a":[],"v":{"thing":1,"elec":1,"house":1,"hot":1,"sound":1,"bath":1}},{"n":"컴퓨터","a":[],"v":{"thing":1,"elec":1,"house":1,"screen":1,"school":0.5}},{"n":"전구","a":["형광등"],"v":{"thing":1,"elec":1,"house":1,"round":1,"light":1,"glass":1}},{"n":"스마트폰","a":["휴대폰","핸드폰"],"v":{"thing":1,"elec":1,"carry":1,"screen":1,"sound":1,"black":1}},{"n":"노트북","a":[],"v":{"thing":1,"elec":1,"carry":1,"screen":1,"school":0.5,"black":1}},{"n":"태블릿","a":["아이패드"],"v":{"thing":1,"elec":1,"carry":1,"screen":1}},{"n":"리모컨","a":[],"v":{"thing":1,"elec":1,"carry":1,"house":1,"black":1}},{"n":"카메라","a":[],"v":{"thing":1,"elec":1,"carry":1,"screen":1,"black":1}},{"n":"이어폰","a":[],"v":{"thing":1,"elec":1,"carry":1,"wear":1,"tiny":1,"sound":1,"white":1,"pair":1}},{"n":"손전등","a":[],"v":{"thing":1,"elec":1,"carry":1,"light":1}},{"n":"게임기","a":[],"v":{"thing":1,"elec":1,"carry":1,"screen":1,"toy":1,"game":1}},{"n":"시계","a":[],"v":{"thing":1,"carry":1,"elec":0.5,"round":1,"wear":0.5,"sound":1}},{"n":"침대","a":[],"v":{"thing":1,"house":1,"big":1,"soft":1,"sit":1,"night":1}},{"n":"소파","a":[],"v":{"thing":1,"house":1,"big":1,"soft":1,"sit":1}},{"n":"의자","a":[],"v":{"thing":1,"house":1,"sit":1,"school":0.5}},{"n":"책상","a":[],"v":{"thing":1,"house":1,"school":1}},{"n":"베개","a":[],"v":{"thing":1,"house":1,"soft":1,"white":1,"sit":1}},{"n":"이불","a":[],"v":{"thing":1,"house":1,"soft":1,"winter":1}},{"n":"거울","a":[],"v":{"thing":1,"house":1,"bath":1,"glass":1}},{"n":"칫솔","a":[],"v":{"thing":1,"house":1,"bath":1,"tiny":1,"carry":1,"clean":1,"mouth":1}},{"n":"치약","a":[],"v":{"thing":1,"house":1,"bath":1,"clean":1,"tiny":1,"carry":1,"white":1,"mouth":1}},{"n":"비누","a":[],"v":{"thing":1,"house":1,"bath":1,"clean":1,"tiny":1,"carry":1}},{"n":"수건","a":[],"v":{"thing":1,"house":1,"bath":1,"soft":1,"clean":1,"carry":1,"white":1}},{"n":"휴지","a":[],"v":{"thing":1,"house":1,"white":1,"soft":1,"paper":1,"bath":1,"clean":1,"carry":1}},{"n":"문","a":[],"v":{"thing":1,"house":1,"big":1}},{"n":"창문","a":[],"v":{"thing":1,"house":1,"big":1,"glass":1}},{"n":"쓰레기통","a":[],"v":{"thing":1,"house":1,"clean":1}},{"n":"빗자루","a":[],"v":{"thing":1,"house":1,"clean":1,"carry":1}},{"n":"양초","a":[],"v":{"thing":1,"house":1,"hot":1,"light":1,"white":1}},{"n":"숟가락","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"metal":1,"tiny":1,"mouth":1}},{"n":"젓가락","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"metal":1,"mouth":1,"pair":1}},{"n":"포크","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"metal":1,"sharp":1,"western":1,"mouth":1}},{"n":"칼","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"metal":1,"sharp":1,"scary":1}},{"n":"냄비","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"metal":1,"hot":1,"round":1}},{"n":"프라이팬","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"metal":1,"hot":1,"round":1,"black":1}},{"n":"컵","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"round":1}},{"n":"접시","a":[],"v":{"thing":1,"kitchen":1,"house":1,"carry":1,"round":1,"white":1}},{"n":"안경","a":[],"v":{"thing":1,"wear":1,"carry":1,"tiny":1,"glass":1,"pair":0.5}},{"n":"모자","a":[],"v":{"thing":1,"wear":1,"carry":1,"soft":1,"outdoor":1,"round":0.5}},{"n":"신발","a":["운동화"],"v":{"thing":1,"wear":1,"carry":1,"outdoor":1,"pair":1}},{"n":"양말","a":[],"v":{"thing":1,"wear":1,"carry":1,"soft":1,"tiny":1,"pair":1}},{"n":"장갑","a":[],"v":{"thing":1,"wear":1,"carry":1,"soft":1,"winter":1,"pair":1}},{"n":"목도리","a":[],"v":{"thing":1,"wear":1,"carry":1,"soft":1,"winter":1}},{"n":"마스크","a":[],"v":{"thing":1,"wear":1,"carry":1,"white":1,"soft":1,"tiny":1,"mouth":1}},{"n":"반지","a":[],"v":{"thing":1,"wear":1,"carry":1,"metal":1,"tiny":1,"round":1}},{"n":"옷","a":["티셔츠"],"v":{"thing":1,"wear":1,"carry":1,"soft":1}},{"n":"가방","a":[],"v":{"thing":1,"wear":0.5,"carry":1,"school":1}},{"n":"우산","a":[],"v":{"thing":1,"carry":1,"outdoor":1,"water":1}},{"n":"열쇠","a":[],"v":{"thing":1,"carry":1,"metal":1,"tiny":1}},{"n":"동전","a":[],"v":{"thing":1,"carry":1,"metal":1,"tiny":1,"round":1}},{"n":"돈","a":["지폐"],"v":{"thing":1,"carry":1,"paper":1,"tiny":1}},{"n":"종이","a":[],"v":{"thing":1,"carry":1,"paper":1,"white":1}},{"n":"편지","a":[],"v":{"thing":1,"carry":1,"paper":1,"write":1}},{"n":"상자","a":["택배상자"],"v":{"thing":1,"carry":1,"paper":1,"brown":1}},{"n":"망치","a":[],"v":{"thing":1,"carry":1,"metal":1}},{"n":"돋보기","a":[],"v":{"thing":1,"carry":1,"round":1}},{"n":"연필","a":[],"v":{"thing":1,"school":1,"carry":1,"tiny":1,"yellow":1,"write":1}},{"n":"지우개","a":[],"v":{"thing":1,"school":1,"carry":1,"tiny":1,"soft":1,"white":1}},{"n":"볼펜","a":[],"v":{"thing":1,"school":1,"carry":1,"write":1,"tiny":1}},{"n":"가위","a":[],"v":{"thing":1,"school":1,"carry":1,"metal":1,"tiny":1,"sharp":1}},{"n":"풀(문구)","a":[],"v":{"thing":1,"school":1,"carry":1,"tiny":1,"white":1}},{"n":"공책","a":["노트"],"v":{"thing":1,"school":1,"carry":1,"paper":1,"write":1}},{"n":"책","a":[],"v":{"thing":1,"school":1,"carry":1,"paper":1,"house":1}},{"n":"크레파스","a":["색연필"],"v":{"thing":1,"school":1,"carry":1,"write":1,"kids":1,"tiny":1}},{"n":"칠판","a":[],"v":{"thing":1,"school":1,"green":1,"big":1,"write":1}},{"n":"필통","a":[],"v":{"thing":1,"school":1,"carry":1,"tiny":1}},{"n":"인형","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"soft":1,"cute":1}},{"n":"로봇","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"metal":1,"elec":0.5}},{"n":"레고","a":["블록"],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"tiny":1}},{"n":"풍선","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"soft":1,"round":1,"red":0.5}},{"n":"연","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"fly":1,"sky":1,"outdoor":1}},{"n":"팽이","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"round":1,"tiny":1}},{"n":"퍼즐","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"paper":1}},{"n":"비눗방울","a":[],"v":{"thing":1,"toy":1,"kids":1,"carry":1,"round":1,"water":1,"outdoor":1}},{"n":"축구공","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"ball":1,"round":1,"white":1,"black":1,"carry":1,"kick":1}},{"n":"야구공","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"ball":1,"round":1,"white":1,"tiny":1,"carry":1}},{"n":"농구공","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"ball":1,"round":1,"brown":1,"carry":1}},{"n":"야구방망이","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"carry":1,"brown":1}},{"n":"줄넘기","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"carry":1}},{"n":"스키","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"winter":1,"cold":1}},{"n":"수영복","a":[],"v":{"thing":1,"sport":1,"outdoor":1,"wear":1,"swim":1,"water":1,"summer":1}},{"n":"피아노","a":[],"v":{"thing":1,"music":1,"sound":1,"house":1,"big":1,"black":1,"white":1}},{"n":"기타","a":[],"v":{"thing":1,"music":1,"sound":1,"carry":0.5,"brown":1}},{"n":"북","a":[],"v":{"thing":1,"music":1,"sound":1,"round":1}},{"n":"바이올린","a":[],"v":{"thing":1,"music":1,"sound":1,"carry":1,"brown":1}},{"n":"리코더","a":[],"v":{"thing":1,"music":1,"sound":1,"school":1,"carry":1,"tiny":1,"mouth":1}},{"n":"자전거","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"sport":1,"twowheel":1}},{"n":"킥보드","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"elec":0.5,"carry":0.5,"twowheel":0.5}},{"n":"자동차","a":["차"],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"big":1,"sound":1,"elec":0.5}},{"n":"버스","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"big":1,"sound":1,"many":1}},{"n":"택시","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"sound":1}},{"n":"트럭","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"big":1,"sound":1}},{"n":"소방차","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"big":1,"red":1,"sound":1,"help":1}},{"n":"경찰차","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"sound":1,"help":1}},{"n":"구급차","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"white":1,"sound":1,"sick":1,"help":1}},{"n":"오토바이","a":[],"v":{"thing":1,"ride":1,"wheel":1,"road":1,"outdoor":1,"metal":1,"sound":1,"twowheel":1}},{"n":"기차","a":["KTX"],"v":{"thing":1,"ride":1,"big":1,"metal":1,"outdoor":1,"sound":1,"wheel":1,"elec":0.5,"many":1}},{"n":"지하철","a":[],"v":{"thing":1,"ride":1,"big":1,"metal":1,"sound":1,"wheel":1,"elec":1,"many":1}},{"n":"비행기","a":[],"v":{"thing":1,"ride":1,"big":1,"metal":1,"outdoor":1,"sound":1,"fly":1,"wing":1,"sky":1,"many":1}},{"n":"헬리콥터","a":[],"v":{"thing":1,"ride":1,"big":1,"metal":1,"outdoor":1,"sound":1,"fly":1,"sky":1}},{"n":"배(타는 배)","a":["선박"],"v":{"thing":1,"ride":1,"big":1,"metal":1,"outdoor":1,"sound":1,"water":1,"many":1}},{"n":"잠수함","a":[],"v":{"thing":1,"ride":1,"big":1,"metal":1,"outdoor":1,"sound":1,"water":1,"scary":1}},{"n":"로켓","a":[],"v":{"thing":1,"big":1,"metal":1,"outdoor":1,"sound":1,"ride":0.5,"fly":1,"sky":1,"scary":1}},{"n":"유모차","a":[],"v":{"thing":1,"ride":1,"outdoor":1,"wheel":1,"kids":1}}]},"celeb":{"q":{"male":"남자인가요?","korean":"한국 사람인가요?","foreignborn":"외국에서 태어났나요?","b70":"1970년 이후에 태어났나요?","b80":"1980년 이후에 태어났나요?","b90":"1990년 이후에 태어났나요?","b00":"2000년 이후에 태어났나요?","era90":"1990년대에 이미 유명했나요?","singer":"가수인가요?","idol":"아이돌 출신인가요?","group":"그룹(밴드) 멤버인가요? (예전 포함)","leader":"그룹의 리더인가요?","youngest":"그룹의 막내인가요?","rapper":"랩을 하나요?","solo":"솔로 가수로도 활동하나요?","ballad":"발라드로 유명한가요?","trot":"트로트 가수인가요?","dance":"춤으로 특히 유명한가요?","producer":"작곡이나 프로듀싱을 하나요?","sm":"SM 엔터테인먼트 소속(출신)인가요?","yg":"YG 엔터테인먼트 소속(출신)인가요?","jyp":"JYP 엔터테인먼트 소속(출신)인가요?","hybe":"하이브(빅히트) 소속(출신)인가요?","bts":"BTS 멤버인가요?","blackpink":"블랙핑크 멤버인가요?","actor":"배우인가요?","drama":"드라마로 유명한가요?","movie":"영화로 유명한가요?","hollywood":"할리우드(미국) 작품에 나왔나요?","squid":"'오징어 게임'에 나왔나요?","crash":"드라마 '사랑의 불시착'에 나왔나요?","director":"영화감독인가요?","comedian":"개그맨(코미디언) 출신인가요?","mc":"예능 프로그램 진행(MC)을 자주 하나요?","mudo":"'무한도전'에 나왔나요?","runningman":"'런닝맨' 고정 멤버인가요? (예전 포함)","radio":"라디오 DJ로 유명한가요?","youtube":"유튜브나 인터넷 방송으로 유명한가요?","webtoon":"웹툰 작가 출신인가요?","travel":"여행 콘텐츠로 유명한가요?","food":"음식이나 요리와 관련 있나요?","ceo":"회사(기획사·사업)를 운영하나요?","sports":"운동선수인가요? (은퇴 포함)","soccer":"축구 선수인가요?","baseball":"야구 선수인가요?","olympic":"올림픽 메달리스트인가요?","game":"게임과 관련 있나요?","world":"해외에서도 아주 유명한가요?","abroad":"주로 해외에서 활동하나요?","europe":"유럽 출신인가요?","onenight":"'1박 2일'에 나왔나요?","nahonsan":"'나 혼자 산다'에 고정으로 나왔나요?","sibling":"형제·자매도 연예인인가요?","audition":"오디션 프로그램으로 유명해졌나요?","oscar":"아카데미(오스카) 상을 받았나요?","boys":"'꽃보다 남자'에 나왔나요?","star":"'별에서 온 그대'에 나왔나요?","sun":"'태양의 후예'에 나왔나요?","itaewon":"'이태원 클라쓰'에 나왔나요?","reply":"'응답하라' 시리즈에 나왔나요?","seonjae":"'선재 업고 튀어'에 나왔나요?","moving":"'무빙'에 나왔나요?","glory":"'더 글로리'에 나왔나요?","woo":"'이상한 변호사 우영우'에 나왔나요?","sunshine":"'미스터 션샤인'에 나왔나요?","goblin":"'도깨비'에 나왔나요?","queen":"'눈물의 여왕'에 나왔나요?","couple":"'부부의 세계'에 나왔나요?","dp":"'D.P.'에 나왔나요?","badminton":"배드민턴 선수인가요?","pingpong":"탁구 선수인가요?","volley":"배구 선수인가요?"},"items":[{"n":"유재석","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"mudo":1,"runningman":1,"era90":0.5}},{"n":"강호동","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"sports":0.5,"food":0.5,"era90":1,"onenight":1}},{"n":"신동엽","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"era90":1}},{"n":"박명수","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"mudo":1,"radio":1,"era90":0.5}},{"n":"이경규","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"era90":1}},{"n":"김구라","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"youtube":0.5}},{"n":"이수근","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"onenight":1}},{"n":"지석진","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"runningman":1,"era90":1}},{"n":"정준하","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"mudo":1,"food":1}},{"n":"정형돈","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b70":1,"mudo":1}},{"n":"노홍철","a":[],"v":{"korean":1,"male":1,"mc":1,"b70":1,"mudo":1}},{"n":"조세호","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b80":1,"mudo":0.5,"b70":1}},{"n":"양세형","a":[],"v":{"korean":1,"male":1,"comedian":1,"mc":1,"b80":1,"sibling":1,"b70":1}},{"n":"이영자","a":[],"v":{"korean":1,"comedian":1,"mc":1,"food":1,"era90":1}},{"n":"박나래","a":[],"v":{"korean":1,"comedian":1,"mc":1,"b80":1,"nahonsan":1,"b70":1}},{"n":"김숙","a":[],"v":{"korean":1,"comedian":1,"mc":1,"b70":1}},{"n":"송은이","a":[],"v":{"korean":1,"comedian":1,"mc":1,"b70":1,"ceo":1}},{"n":"장도연","a":[],"v":{"korean":1,"comedian":1,"mc":1,"b80":1,"b70":1}},{"n":"전현무","a":[],"v":{"korean":1,"male":1,"mc":1,"b70":1,"nahonsan":1}},{"n":"서장훈","a":[],"v":{"korean":1,"male":1,"mc":1,"b70":1,"sports":1,"era90":1}},{"n":"안정환","a":[],"v":{"korean":1,"male":1,"mc":1,"b70":1,"sports":1,"soccer":1,"era90":1}},{"n":"기안84","a":[],"v":{"korean":1,"male":1,"mc":1,"b80":1,"webtoon":1,"youtube":1,"travel":0.5,"nahonsan":1,"b70":1}},{"n":"이승기","a":[],"v":{"korean":1,"male":1,"mc":1,"b80":1,"singer":1,"solo":1,"ballad":1,"actor":1,"drama":1,"onenight":1,"b70":1}},{"n":"송강호","a":[],"v":{"korean":1,"male":1,"actor":1,"movie":1,"world":0.5,"era90":1}},{"n":"이병헌","a":[],"v":{"korean":1,"male":1,"actor":1,"movie":1,"drama":1,"hollywood":1,"squid":1,"world":1,"era90":1,"b70":1,"sunshine":1}},{"n":"마동석","a":[],"v":{"korean":1,"male":1,"actor":1,"b70":1,"movie":1,"hollywood":1}},{"n":"이정재","a":[],"v":{"korean":1,"male":1,"actor":1,"b70":1,"movie":1,"drama":1,"squid":1,"world":1,"director":0.5,"era90":1}},{"n":"정우성","a":[],"v":{"korean":1,"male":1,"actor":1,"b70":1,"movie":1,"era90":1}},{"n":"황정민","a":[],"v":{"korean":1,"male":1,"actor":1,"b70":1,"movie":1}},{"n":"하정우","a":[],"v":{"korean":1,"male":1,"actor":1,"b70":1,"movie":1,"director":0.5}},{"n":"공유","a":[],"v":{"korean":1,"male":1,"actor":1,"b70":1,"drama":1,"movie":1,"squid":1,"goblin":1}},{"n":"현빈","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"movie":1,"crash":1,"b70":1}},{"n":"조인성","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"movie":1,"moving":1,"b70":1}},{"n":"이민호","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"boys":1,"hollywood":0.5,"b70":1}},{"n":"김수현","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"star":1,"queen":1,"b70":1}},{"n":"송중기","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"movie":1,"sun":1,"b70":1}},{"n":"박서준","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"itaewon":1,"hollywood":1,"b70":1}},{"n":"박보검","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"b90":1,"drama":1,"reply":1,"b70":1}},{"n":"정해인","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"drama":1,"dp":1,"b70":1}},{"n":"변우석","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"b90":1,"drama":1,"seonjae":1,"b70":1}},{"n":"이광수","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"runningman":1,"drama":0.5,"b70":1}},{"n":"차은우","a":[],"v":{"korean":1,"male":1,"actor":1,"b80":1,"b90":1,"drama":1,"idol":1,"group":1,"singer":1,"b70":1}},{"n":"윤여정","a":[],"v":{"korean":1,"actor":1,"movie":1,"hollywood":1,"world":0.5,"oscar":1}},{"n":"김혜수","a":[],"v":{"korean":1,"actor":1,"b70":1,"movie":1,"drama":1,"era90":1}},{"n":"전지현","a":[],"v":{"korean":1,"actor":1,"b80":1,"drama":1,"movie":1,"era90":0.5,"star":1,"b70":1}},{"n":"송혜교","a":[],"v":{"korean":1,"actor":1,"b80":1,"drama":1,"sun":1,"glory":1,"b70":1}},{"n":"손예진","a":[],"v":{"korean":1,"actor":1,"b80":1,"drama":1,"movie":1,"crash":1,"b70":1}},{"n":"송지효","a":[],"v":{"korean":1,"actor":1,"b80":1,"runningman":1,"b70":1}},{"n":"김태리","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"drama":1,"movie":1,"sunshine":1,"b70":1}},{"n":"박은빈","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"drama":1,"woo":1,"b70":1}},{"n":"김고은","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"movie":1,"drama":1,"goblin":1,"b70":1}},{"n":"김지원","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"drama":1,"queen":1,"b70":1}},{"n":"한소희","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"drama":1,"couple":1,"b70":1}},{"n":"고윤정","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"drama":1,"moving":1,"b70":1}},{"n":"정호연","a":[],"v":{"korean":1,"actor":1,"b80":1,"b90":1,"squid":1,"hollywood":0.5,"world":0.5,"b70":1}},{"n":"아이유","a":[],"v":{"korean":1,"singer":1,"b80":1,"b90":1,"solo":1,"ballad":1,"actor":1,"drama":1,"world":0.5,"b70":1}},{"n":"이효리","a":[],"v":{"korean":1,"singer":1,"b70":1,"idol":1,"group":1,"solo":1,"era90":1,"mc":0.5}},{"n":"임영웅","a":[],"v":{"korean":1,"singer":1,"male":1,"b80":1,"b90":1,"solo":1,"trot":1,"ballad":1,"audition":1,"b70":1}},{"n":"이찬원","a":[],"v":{"korean":1,"singer":1,"male":1,"b90":1,"b80":1,"solo":1,"trot":1,"mc":1,"audition":1,"b70":1}},{"n":"장윤정","a":[],"v":{"korean":1,"singer":1,"b80":1,"solo":1,"trot":1,"b70":1}},{"n":"송가인","a":[],"v":{"korean":1,"singer":1,"b80":1,"solo":1,"trot":1,"audition":1,"b70":1}},{"n":"나훈아","a":[],"v":{"korean":1,"singer":1,"male":1,"solo":1,"trot":1,"era90":1}},{"n":"조용필","a":[],"v":{"korean":1,"singer":1,"male":1,"solo":1,"era90":1}},{"n":"서태지","a":[],"v":{"korean":1,"singer":1,"male":1,"b70":1,"group":1,"leader":1,"solo":1,"producer":1,"era90":1}},{"n":"싸이","a":[],"v":{"korean":1,"singer":1,"male":1,"b70":1,"solo":1,"dance":1,"world":1,"ceo":1,"producer":1}},{"n":"박진영","a":[],"v":{"korean":1,"singer":1,"male":1,"b70":1,"solo":1,"dance":1,"jyp":1,"ceo":1,"producer":1,"era90":1}},{"n":"방시혁","a":[],"v":{"korean":1,"male":1,"b70":1,"hybe":1,"ceo":1,"producer":1}},{"n":"성시경","a":[],"v":{"korean":1,"singer":1,"male":1,"b70":1,"solo":1,"ballad":1,"food":1,"youtube":1,"radio":0.5}},{"n":"박효신","a":[],"v":{"korean":1,"singer":1,"male":1,"b80":1,"solo":1,"ballad":1,"b70":1}},{"n":"장범준","a":[],"v":{"korean":1,"singer":1,"male":1,"b80":1,"group":1,"solo":1,"producer":1,"b70":1}},{"n":"김종국","a":[],"v":{"korean":1,"singer":1,"male":1,"b70":1,"group":1,"solo":1,"runningman":1,"youtube":0.5,"era90":1}},{"n":"하하","a":[],"v":{"korean":1,"singer":1,"male":1,"b70":1,"mudo":1,"runningman":1,"mc":1,"rapper":0.5}},{"n":"비","a":["정지훈"],"v":{"korean":1,"singer":1,"male":1,"b80":1,"solo":1,"dance":1,"actor":1,"jyp":1,"hollywood":0.5,"b70":1}},{"n":"보아","a":[],"v":{"korean":1,"singer":1,"b80":1,"solo":1,"dance":1,"sm":1,"world":0.5,"b70":1}},{"n":"지드래곤","a":["GD"],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b80":1,"yg":1,"leader":1,"rapper":1,"solo":1,"producer":1,"world":1,"b70":1}},{"n":"태연","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b80":1,"sm":1,"leader":1,"solo":1,"ballad":1,"b70":1}},{"n":"윤아","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b80":1,"b90":1,"sm":1,"actor":1,"drama":1,"b70":1}},{"n":"유노윤호","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b80":1,"sm":1,"leader":1,"dance":1,"b70":1}},{"n":"태민","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b90":1,"b80":1,"sm":1,"youngest":1,"dance":1,"solo":1,"b70":1}},{"n":"백현","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b90":1,"b80":1,"sm":1,"solo":1,"b70":1}},{"n":"디오","a":["도경수"],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b90":1,"b80":1,"sm":1,"actor":1,"movie":1,"drama":1,"b70":1}},{"n":"수지","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b90":1,"b80":1,"jyp":1,"actor":1,"drama":1,"b70":1}},{"n":"나연","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b90":1,"b80":1,"jyp":1,"solo":1,"audition":0.5,"b70":1}},{"n":"쯔위","a":[],"v":{"singer":1,"idol":1,"group":1,"foreignborn":1,"b90":1,"b80":1,"jyp":1,"youngest":1,"audition":0.5,"b70":1}},{"n":"지코","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b90":1,"b80":1,"leader":1,"rapper":1,"solo":1,"producer":1,"b70":1}},{"n":"화사","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b90":1,"b80":1,"solo":1,"rapper":0.5,"b70":1}},{"n":"강다니엘","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b90":1,"b80":1,"solo":1,"dance":1,"audition":1,"b70":1}},{"n":"이찬혁","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"male":1,"b90":1,"b80":1,"yg":0.5,"producer":1,"sibling":1,"audition":1,"b70":1}},{"n":"카리나","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b00":1,"b90":1,"b80":1,"sm":1,"leader":1,"dance":1,"world":0.5,"b70":1}},{"n":"윈터","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b00":1,"b90":1,"b80":1,"sm":1,"b70":1}},{"n":"장원영","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b00":1,"b90":1,"b80":1,"world":0.5,"audition":1,"b70":1}},{"n":"안유진","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b00":1,"b90":1,"b80":1,"leader":1,"mc":0.5,"audition":1,"b70":1}},{"n":"김채원","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"b00":1,"b90":1,"b80":1,"hybe":1,"leader":1,"audition":1,"b70":1}},{"n":"하니","a":[],"v":{"singer":1,"idol":1,"group":1,"foreignborn":1,"b00":1,"b90":1,"b80":1,"hybe":0.5,"world":0.5,"b70":1}},{"n":"RM","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"leader":1,"rapper":1,"producer":1,"b70":1}},{"n":"진","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"b70":1}},{"n":"슈가","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"rapper":1,"producer":1,"b70":1}},{"n":"제이홉","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"rapper":1,"dance":1,"b70":1}},{"n":"지민","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"dance":1,"b70":1}},{"n":"뷔","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"actor":0.5,"b70":1}},{"n":"정국","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"bts":1,"hybe":1,"world":1,"solo":1,"male":1,"b80":1,"b90":1,"youngest":1,"b70":1}},{"n":"제니","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"blackpink":1,"yg":1,"world":1,"solo":1,"b80":1,"b90":1,"rapper":1,"b70":1}},{"n":"지수","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"blackpink":1,"yg":1,"world":1,"solo":1,"b80":1,"b90":1,"actor":1,"drama":1,"b70":1}},{"n":"로제","a":[],"v":{"korean":1,"singer":1,"idol":1,"group":1,"blackpink":1,"yg":1,"world":1,"solo":1,"b80":1,"b90":1,"foreignborn":1,"b70":1}},{"n":"리사","a":[],"v":{"singer":1,"idol":1,"group":1,"blackpink":1,"yg":1,"world":1,"solo":1,"b80":1,"b90":1,"foreignborn":1,"rapper":1,"dance":1,"youngest":1,"b70":1}},{"n":"손흥민","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"b90":1,"soccer":1,"abroad":1,"world":1,"b70":1}},{"n":"이강인","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"b90":1,"b00":1,"soccer":1,"abroad":1,"world":0.5,"b70":1}},{"n":"김민재","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"b90":1,"soccer":1,"abroad":1,"b70":1}},{"n":"박지성","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"soccer":1,"abroad":0.5,"world":0.5,"b70":1}},{"n":"류현진","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"baseball":1,"olympic":1,"abroad":0.5,"b70":1}},{"n":"이정후","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"b90":1,"baseball":1,"abroad":1,"b70":1}},{"n":"박태환","a":[],"v":{"korean":1,"male":1,"sports":1,"b80":1,"olympic":1,"b70":1}},{"n":"페이커","a":[],"v":{"korean":1,"male":1,"b80":1,"b90":1,"game":1,"world":1,"b70":1}},{"n":"김연아","a":[],"v":{"korean":1,"sports":1,"b80":1,"b90":1,"olympic":1,"world":1,"b70":1}},{"n":"김연경","a":[],"v":{"korean":1,"sports":1,"b80":1,"abroad":0.5,"volley":1,"b70":1}},{"n":"장미란","a":[],"v":{"korean":1,"sports":1,"b80":1,"olympic":1,"b70":1}},{"n":"안세영","a":[],"v":{"korean":1,"sports":1,"b80":1,"b90":1,"b00":1,"olympic":1,"badminton":1,"b70":1}},{"n":"신유빈","a":[],"v":{"korean":1,"sports":1,"b80":1,"b90":1,"b00":1,"olympic":1,"pingpong":1,"b70":1}},{"n":"박세리","a":[],"v":{"korean":1,"sports":1,"b70":1,"abroad":0.5,"mc":1,"era90":1}},{"n":"봉준호","a":[],"v":{"korean":1,"male":1,"director":1,"movie":1,"world":1,"oscar":1}},{"n":"박찬욱","a":[],"v":{"korean":1,"male":1,"director":1,"movie":1,"world":1}},{"n":"백종원","a":[],"v":{"korean":1,"male":1,"food":1,"ceo":1,"mc":1}},{"n":"안성재","a":[],"v":{"korean":1,"male":1,"b80":1,"food":1,"b70":1}},{"n":"침착맨","a":[],"v":{"korean":1,"male":1,"b80":1,"youtube":1,"webtoon":1,"game":0.5,"b70":1}},{"n":"곽튜브","a":[],"v":{"korean":1,"male":1,"b90":1,"b80":1,"youtube":1,"travel":1,"b70":1}},{"n":"빠니보틀","a":[],"v":{"korean":1,"male":1,"b80":1,"youtube":1,"travel":1,"b70":1}},{"n":"쯔양","a":[],"v":{"korean":1,"b90":1,"b80":1,"youtube":1,"food":1,"b70":1}},{"n":"오타니 쇼헤이","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"sports":1,"baseball":1,"b80":1,"b90":1,"b70":1}},{"n":"리오넬 메시","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"sports":1,"soccer":1,"b80":1,"b70":1}},{"n":"크리스티아누 호날두","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"sports":1,"soccer":1,"b80":1,"europe":1,"b70":1}},{"n":"테일러 스위프트","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"singer":1,"solo":1,"b80":1,"b70":1}},{"n":"저스틴 비버","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"singer":1,"solo":1,"b80":1,"b90":1,"b70":1}},{"n":"톰 크루즈","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"actor":1,"movie":1,"hollywood":1,"era90":1}},{"n":"레오나르도 디카프리오","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"actor":1,"movie":1,"hollywood":1,"b70":1,"era90":1,"oscar":1}},{"n":"일론 머스크","a":[],"v":{"abroad":1,"foreignborn":1,"world":1,"male":1,"ceo":1,"b70":1}}]}};
+// 스무고개 추론 엔진 (DOM 없음 — 브라우저와 시뮬레이션에서 같이 씀)
+const CONFIG = {
+  slip: 0.06,       // 사람이 실수로 반대로 답할 확률 (작을수록 엄격)
+  guessP: 0.86,     // 이 확신 이상이면 20개 전이라도 찍는다
+  minQ: 6,          // 최소 이만큼은 묻고 찍는다
+  baseWeight: 3,    // 기본 데이터 하나가 학습 기록 몇 판만큼의 무게인지
+  newDefault: 0.5,  // 새로 배운 항목에서 아직 모르는 질문 값
 };
-// A=동물, P=식물, F=음식, T=물건. "~"는 '그럴 수도 있음'
-const RAW_ALL = `강아지|A mam pet leg4 sound soft house
-고양이|A mam pet leg4 sound soft house ~black
-토끼|A mam pet leg4 soft white ~farm ~tiny
-햄스터|A mam pet leg4 soft tiny house ~carry
-소|A mam farm leg4 big sound outdoor ~black ~white
-돼지|A mam farm leg4 sound outdoor
-말|A mam farm leg4 big ride sound outdoor ~sport
-양|A mam farm leg4 soft white outdoor sound
-닭|A bird farm sound outdoor white wing
-오리|A bird farm sea fly sound outdoor ~yellow wing
-펭귄|A bird sea wild black white outdoor wing
-독수리|A bird fly wild scary outdoor sky wing
-비둘기|A bird fly outdoor sound sky wing
-앵무새|A bird fly pet sound green ~red house wing
-사자|A mam wild leg4 big scary sound yellow outdoor
-호랑이|A mam wild leg4 big scary sound yellow black outdoor
-코끼리|A mam wild leg4 big sound outdoor
-기린|A mam wild leg4 big yellow outdoor
-곰|A mam wild leg4 big scary soft outdoor ~black
-원숭이|A mam wild sound outdoor
-판다|A mam wild leg4 big soft black white outdoor
-여우|A mam wild leg4 outdoor ~red
-다람쥐|A mam wild leg4 tiny outdoor soft
-고래|A mam sea wild big sound
-상어|A sea wild big scary
-금붕어|A sea pet tiny red house
-문어|A sea wild soft ~red ~food
-거북이|A sea leg4 ~pet ~wild green
-개구리|A leg4 ~sea tiny green outdoor sound wild
-뱀|A wild scary outdoor ~green
-악어|A wild sea leg4 big scary green outdoor
-나비|A bug fly tiny outdoor wild ~yellow wing
-꿀벌|A bug fly tiny scary yellow black outdoor sound wing
-개미|A bug tiny black outdoor wild
-모기|A bug fly tiny sound house scary wing
-거미|A ~bug tiny scary black wild ~house
-달팽이|A ~bug tiny soft outdoor wild
-공룡|A big scary wild ~green outdoor sound
-해바라기|P yellow outdoor ~big
-장미|P red outdoor
-선인장|P green ~house ~scary
-나무|P green big outdoor
-네잎클로버|P green tiny outdoor
-사과|F fruit sweet red round carry snack
-바나나|F fruit sweet yellow carry snack
-수박|F fruit sweet green round cold
-딸기|F fruit sweet red tiny snack
-포도|F fruit sweet round ~green
-귤|F fruit sweet ~yellow round tiny carry snack
-복숭아|F fruit sweet round soft
-당근|F veg ~red
-감자|F veg round ~hot
-고추|F veg spicy red ~green ~kfood
-옥수수|F veg yellow sweet ~snack hot
-김치|F kfood spicy red meal
-떡볶이|F kfood spicy red snack hot soft ~soup
-비빔밥|F kfood meal hot ~spicy
-김밥|F kfood meal carry black
-라면|F noodle meal hot spicy ~kfood soup
-짜장면|F noodle meal hot black
-냉면|F noodle kfood meal cold soup
-삼겹살|F kfood meal hot
-된장찌개|F kfood meal hot soup
-치킨|F meal hot snack ~kfood yellow
-피자|F meal hot round
-햄버거|F meal round carry
-초밥|F meal cold
-아이스크림|F snack sweet cold soft
-초콜릿|F snack sweet ~black carry tiny
-케이크|F snack sweet soft round ~white
-떡|F kfood snack sweet soft white
-빵|F snack ~meal soft ~sweet carry
-붕어빵|F kfood snack sweet hot outdoor carry
-달걀|F round white tiny kitchen
-우유|F drink white cold
-커피|F drink hot black ~cold
-콜라|F drink sweet cold ~black
-팝콘|F snack ~sweet white
-솜사탕|F snack sweet soft ~white
-냉장고|T elec house kitchen big cold white
-텔레비전|T elec screen house sound black
-세탁기|T elec house big white sound
-전자레인지|T elec house kitchen hot
-스마트폰|T elec screen carry sound black
-노트북|T elec screen carry ~school black
-에어컨|T elec house cold white
-선풍기|T elec house round
-시계|T ~elec house round ~wear sound
-침대|T house big soft
-의자|T house ~school
-숟가락|T kitchen metal carry tiny
-젓가락|T kitchen metal carry
-냄비|T kitchen metal hot round
-컵|T kitchen house carry round
-우산|T carry outdoor
-안경|T wear tiny carry
-모자|T wear soft carry
-신발|T wear outdoor
-양말|T wear soft tiny
-가방|T carry ~wear school
-연필|T school carry tiny yellow
-지우개|T school tiny carry soft white
-책|T school carry house
-가위|T school metal carry tiny ~scary
-칠판|T school green big
-거울|T house ~carry
-칫솔|T house carry tiny
-베개|T house soft white
-인형|T house soft carry
-열쇠|T metal tiny carry
-동전|T metal tiny round carry
-풍선|T soft round ~red carry outdoor ~sky
-양초|T house hot white
-전구|T elec house round hot
-리모컨|T elec carry house black
-카메라|T elec carry screen black
-이어폰|T elec wear tiny sound white
-피아노|T music sound house big black white
-기타|T music sound ~carry
-북|T music sound round
-축구공|T sport round outdoor white black
-야구방망이|T sport outdoor carry ~metal
-자전거|T ride wheel outdoor road sport metal
-킥보드|T ride wheel outdoor ~elec ~carry
-자동차|T ride wheel road ~elec outdoor big metal sound
-버스|T ride wheel road big outdoor sound
-소방차|T ride wheel road big red sound metal outdoor
-오토바이|T ride wheel road metal sound outdoor
-기차|T ride wheel big metal outdoor sound ~elec
-지하철|T ride wheel big metal sound elec
-비행기|T ride fly big metal outdoor sound sky wing
-헬리콥터|T ride fly big metal sound outdoor sky
-배|T ride sea big outdoor
-로켓|T fly big metal scary ~ride sky sound ~wing
-눈사람|~thing outdoor white cold round
-해|round hot yellow outdoor big sky
-달|round yellow outdoor big sky
-구름|white soft outdoor big sky
-무지개|outdoor big sky`;
 
-const EXPAND = {A:'liv ani', P:'liv plant', F:'food', T:'thing'};
+function Engine(theme, learned){
+  const Q = theme.q, KEYS = Object.keys(Q);
+  const items = theme.items.map(it => ({n: it.n, a: it.a || [], v: Object.assign({}, it.v), def: 0, plays: 0}));
+  const byName = new Map();
+  items.forEach((it, i) => [it.n, ...it.a].forEach(x => { if(!byName.has(norm(x))) byName.set(norm(x), i); }));
 
+  // 학습 기록 반영: 질문마다 [합, 횟수]
+  if(learned && learned.items){
+    for(const name in learned.items){
+      const rec = learned.items[name];
+      let i = byName.get(norm(name));
+      if(i === undefined){
+        i = items.push({n: name, a: [], v: {}, def: CONFIG.newDefault, plays: 0, learned: true}) - 1;
+        byName.set(norm(name), i);
+      }
+      const it = items[i];
+      for(const k in rec){
+        if(!(k in Q) || !Array.isArray(rec[k])) continue;
+        const [s, c] = rec[k]; if(!c) continue;
+        const base = (k in it.v) ? it.v[k] : it.def;
+        const bw = it.learned ? 1 : CONFIG.baseWeight;
+        it.v[k] = (base*bw + s) / (bw + c);
+      }
+      it.plays = (learned.plays && learned.plays[name]) || 0;
+    }
+  }
 
-const Q_CELEB = {
-  male:'남자인가요?', korean:'한국 사람인가요?', foreignborn:'외국에서 태어났나요?',
-  b80:'1980년 이후에 태어났나요?', b90:'1990년 이후에 태어났나요?', b00:'2000년 이후에 태어났나요?',
-  singer:'가수인가요?', idol:'아이돌 출신인가요?', group:'그룹 멤버인가요? (예전 포함)', leader:'그룹의 리더인가요?',
-  rapper:'랩을 하나요?', solo:'솔로 가수로도 활동하나요?', trot:'트로트 가수인가요?', dance:'춤으로 특히 유명한가요?',
-  actor:'배우인가요?', drama:'드라마로 유명한가요?', movie:'영화로 유명한가요?', hollywood:'할리우드 영화에 나왔나요?',
-  director:'영화감독인가요?', comedian:'개그맨(코미디언) 출신인가요?', mc:'예능 프로그램 진행(MC)을 자주 하나요?',
-  youtube:'유튜브나 인터넷 방송으로 유명한가요?', sports:'운동선수인가요?', soccer:'축구 선수인가요?',
-  game:'게임과 관련 있나요?', food:'음식이나 요리와 관련 있나요?', ceo:'회사(기획사·사업)를 운영하나요?',
-  world:'해외에서도 아주 유명한가요?', abroad:'주로 해외에서 활동하나요?', bts:'BTS 멤버인가요?',
-  blackpink:'블랙핑크 멤버인가요?', youngest:'그룹의 막내인가요?',
-  mudo:'무한도전에 나왔나요?', radio:'라디오 DJ로 유명한가요?', crash:"드라마 '사랑의 불시착'에 나왔나요?", europe:'유럽 출신인가요?'
-};
-const RAW_CELEB = `유재석|male korean comedian mc mudo
-강호동|male korean comedian mc ~sports food
-신동엽|male korean comedian mc
-박명수|male korean comedian mc ~singer mudo radio
-이영자|korean comedian mc food
-박나래|korean comedian mc b80
-송강호|male korean actor movie world
-이병헌|male korean actor movie drama hollywood world
-마동석|male korean actor movie hollywood ~sports
-이정재|male korean actor movie drama world ~director
-전지현|korean actor drama movie b80
-송혜교|korean actor drama b80
-공유|male korean actor drama movie
-현빈|male korean actor drama movie b80 crash
-손예진|korean actor drama movie b80 crash
-박서준|male korean actor drama b80
-차은우|male korean actor drama idol group singer b80 b90
-아이유|korean singer solo actor drama b80 b90
-이효리|korean singer solo idol group ~mc
-임영웅|male korean singer solo trot b80 b90
-장윤정|korean singer solo trot b80 ~mc
-송가인|korean singer solo trot b80
-싸이|male korean singer solo world dance ~ceo
-지드래곤|male korean singer idol group leader rapper solo b80 world
-태연|korean singer idol group leader solo b80
-윤아|korean singer idol group actor drama b80 b90
-장원영|korean singer idol group b80 b90 b00
-카리나|korean singer idol group leader dance b80 b90 b00
-RM|male korean singer idol group leader rapper bts b80 b90 world
-진|male korean singer idol group bts b80 b90 world
-지민|male korean singer idol group bts dance solo b80 b90 world
-정국|male korean singer idol group bts youngest solo b80 b90 world
-제니|korean singer idol group rapper blackpink solo b80 b90 world
-리사|singer idol group rapper dance blackpink youngest foreignborn b80 b90 world
-지수|korean singer idol group blackpink actor b80 b90 world
-로제|~korean singer idol group blackpink solo foreignborn b80 b90 world
-박진영|male korean singer solo ceo dance
-백종원|male korean food ceo mc
-페이커|male korean game b80 b90 world
-손흥민|male korean sports soccer abroad b80 b90 world
-김연아|korean sports b80 b90 world
-김연경|korean sports ~abroad b80 world
-오타니 쇼헤이|male sports abroad foreignborn b80 b90 world
-리오넬 메시|male sports soccer abroad foreignborn b80 world
-크리스티아누 호날두|male sports soccer abroad foreignborn b80 world europe
-테일러 스위프트|singer solo abroad foreignborn b80 world
-톰 크루즈|male actor movie hollywood abroad foreignborn world
-봉준호|male korean director movie world
-침착맨|male korean youtube ~game b80
-쯔양|korean youtube food b80 b90`;
-const THEMES = {
-  all:{label:'모든 것', Q:Q_ALL, RAW:RAW_ALL, chips:['동물','음식','물건','탈것','자연'],
-    prompt:'머릿속에 무언가 하나를 떠올려 주세요.', eg:'예: 고구마'},
-  celeb:{label:'연예인', Q:Q_CELEB, RAW:RAW_CELEB, chips:['가수·아이돌','배우','예능인','운동선수','유튜버'],
-    prompt:'유명한 사람을 한 명 떠올려 주세요.', eg:'예: 김종국'}
-};
-let theme = 'all', Q, RAW, KEYS, STORE;
-function setTheme(t){
-  theme = THEMES[t] ? t : 'all'; const T = THEMES[theme];
-  Q = T.Q; RAW = T.RAW; KEYS = Object.keys(Q);
-  STORE = theme === 'all' ? 'seumugogae-learned-v1' : 'seumugogae-learned-' + theme + '-v1';
-  try{ localStorage.setItem('seumugogae-theme', theme); }catch(e){}
+  const val = (it, k) => (k in it.v) ? it.v[k] : it.def;
+  // 실제 값 v인 항목에 대해 사람이 a(1, .75, .25, 0)라고 답할 가능도
+  function lik(v, a){
+    const s = CONFIG.slip;
+    const agree = 1 - Math.abs(a - v);         // 0..1
+    return s + (1 - 2*s) * agree;
+  }
+
+  const st = {answers: [], excluded: new Set(), lastGuessQn: -1};
+
+  function weights(){
+    return items.map((it, i) => {
+      if(st.excluded.has(i)) return 0;
+      let w = 1 + Math.min(it.plays, 10) * 0.05;   // 자주 나온 답은 살짝 우대
+      for(const {k, a} of st.answers) if(a !== null) w *= lik(val(it, k), a);
+      return w;
+    });
+  }
+  function ranked(W){
+    let tot = 0; const r = [];
+    W.forEach((w, i) => { tot += w; if(w > 0) r.push(i); });
+    r.sort((x, y) => W[y] - W[x]);
+    return {order: r, tot, p: tot ? W[r[0]] / tot : 0, p2: tot && r[1] !== undefined ? W[r[1]] / tot : 0};
+  }
+  function entropy(arr){
+    let s = 0; for(const x of arr) s += x; if(!s) return 0;
+    let h = 0; for(const x of arr) if(x > 0){ const p = x/s; h -= p*Math.log2(p); }
+    return h;
+  }
+  function pickKey(W, tot, rnd){
+    const asked = new Set(st.answers.map(x => x.k));
+    // 후보가 많을 땐 상위 후보 위주로 계산 (빠르게)
+    const idx = W.map((w, i) => i).filter(i => W[i] > tot * 1e-4);
+    const scored = [];
+    for(const k of KEYS){
+      if(asked.has(k)) continue;
+      const wy = [], wn = []; let py = 0, spread = 0;
+      for(const i of idx){
+        const w = W[i], v = val(items[i], k);
+        wy.push(w*lik(v, 1)); wn.push(w*lik(v, 0));
+        py += w*v; spread += w*Math.abs(v - 0.5);
+      }
+      const sum = idx.reduce((s, i) => s + W[i], 0) || 1;
+      py /= sum;
+      // 기대 엔트로피 + '모르겠어요'가 나올 만한 애매한 질문에 약간의 벌점
+      const amb = 1 - 2*spread/sum;
+      scored.push({k, s: py*entropy(wy) + (1-py)*entropy(wn) + amb*0.35});
+    }
+    if(!scored.length) return null;
+    scored.sort((a, b) => a.s - b.s);
+    const near = scored.filter(x => x.s - scored[0].s < 0.03).slice(0, 3);
+    return near[Math.floor((rnd || Math.random)() * near.length)].k;
+  }
+
+  // 다음 행동: {type:'ask', k} | {type:'guess', i, p} | {type:'none'}
+  function decide(limit, rnd){
+    const W = weights(); const R = ranked(W);
+    const qn = st.answers.length;
+    if(!R.order.length) return {type: 'none'};
+    const top = R.order[0];
+    if(qn >= limit) return {type: 'guess', i: top, p: R.p};
+    if(qn >= CONFIG.minQ && qn > st.lastGuessQn && (R.p >= CONFIG.guessP || (R.p >= 0.6 && R.p >= 12*R.p2)))
+      return {type: 'guess', i: top, p: R.p};
+    const k = pickKey(W, R.tot, rnd);
+    if(!k) return {type: 'guess', i: top, p: R.p};
+    return {type: 'ask', k, p: R.p};
+  }
+  function top(n){ const W = weights(); return ranked(W).order.slice(0, n); }
+  function find(name){ return byName.get(norm(name)); }
+
+  return {Q, KEYS, items, st, val, decide, top, find, weights};
 }
+
+function norm(s){ return String(s).trim().toLowerCase().replace(/\s+/g, ''); }
+
+// 학습 기록에 한 판의 답을 더한다
+function learnInto(learned, name, answers){
+  learned.items = learned.items || {}; learned.plays = learned.plays || {};
+  const rec = learned.items[name] = learned.items[name] || {};
+  for(const {k, a} of answers){ if(a === null) continue; const r = rec[k] = rec[k] || [0, 0]; r[0] += a; r[1] += 1; }
+  learned.plays[name] = (learned.plays[name] || 0) + 1;
+  return learned;
+}
+
+
+
+// 화면 (DATA, Engine, learnInto, CONFIG, norm 은 빌드할 때 위에 들어온다)
+const THEMES = {
+  all:{label:'모든 것', chips:['동물','음식','물건','탈것','장소','직업','캐릭터','자연'],
+    prompt:'머릿속에 무언가 하나를 떠올려 주세요.', eg:'예: 고구마', unit:'개', who:'무엇을',
+    old:'seumugogae-learned-v1'},
+  celeb:{label:'연예인', chips:['가수·아이돌','배우','예능인','운동선수','유튜버','감독'],
+    prompt:'유명한 사람을 한 명 떠올려 주세요.', eg:'예: 김종국', unit:'명', who:'누구를',
+    old:'seumugogae-learned-celeb-v1'}
+};
+const ORD = ['첫','두','세','네','다섯','여섯','일곱','여덟','아홉','열','열한','열두','열세','열네','열다섯','열여섯','열일곱','열여덟','열아홉','스무','스물한','스물두','스물세','스물네','스물다섯'];
+const BASE_LIMIT = 20, EXTRA = 5, END_GUESSES = 3;
+
+let theme = 'all', E = null, learned = null;
+let cur = null, guessIdx = -1, phase = 'intro', limit = BASE_LIMIT, endWrong = 0, extended = false;
+
+function storeKey(){ return 'seumugogae-v2-' + theme; }
+function loadLearned(){
+  let L = null;
+  try{ L = JSON.parse(localStorage.getItem(storeKey())); }catch(e){}
+  if(!L || typeof L !== 'object') L = {items:{}, plays:{}};
+  // 예전 버전 기록 옮기기
+  try{
+    const old = JSON.parse(localStorage.getItem(THEMES[theme].old));
+    if(Array.isArray(old) && old.length){
+      old.forEach(o => { if(o && o.name && o.ans) learnInto(L, o.name, Object.keys(o.ans).map(k => ({k, a:o.ans[k]}))); });
+      localStorage.removeItem(THEMES[theme].old); saveLearned(L);
+    }
+  }catch(e){}
+  return L;
+}
+function saveLearned(L){ try{ localStorage.setItem(storeKey(), JSON.stringify(L)); return true; }catch(e){ return false; } }
+function setTheme(t){ theme = THEMES[t] ? t : 'all'; try{ localStorage.setItem('seumugogae-theme', theme); }catch(e){} }
 try{ setTheme(localStorage.getItem('seumugogae-theme') || 'all'); }catch(e){ setTheme('all'); }
 
-function parse(){
-  return RAW.split('\n').map(line => {
-    const [name, tags] = line.split('|');
-    const v = {};
-    tags.split(/\s+/).forEach(t => {
-      if(!t) return;
-      const maybe = t[0] === '~'; const key = maybe ? t.slice(1) : t;
-      (EXPAND[key] || key).split(' ').forEach(k => { v[k] = maybe ? 0.5 : 1; });
-    });
-    return {name, v, def:0};
-  });
-}
-function loadLearned(){ try{ return JSON.parse(localStorage.getItem(STORE)) || []; }catch(e){ return []; } }
-function saveLearned(list){ try{ localStorage.setItem(STORE, JSON.stringify(list.slice(-300))); return true; }catch(e){ return false; } }
-
-let items = [];
-function buildItems(){
-  items = parse();
-  loadLearned().forEach(l => {
-    if(!l || !l.name || !l.ans) return;
-    let it = items.find(x => x.name === l.name);
-    if(!it){ it = {name:l.name, v:{}, def:0.3}; items.push(it); }
-    for(const k in l.ans){ if(!(k in Q)) continue; const a = l.ans[k];
-      it.v[k] = (k in it.v) ? (it.v[k] + a) / 2 : a; }
-  });
-}
-const val = (it,k) => (k in it.v) ? it.v[k] : it.def;
-const lik = (v,a) => Math.max(0.04, 1 - 0.92*Math.abs(a - v));
-
-// 상태
-let answers = [], excluded = new Set(), cur = null, lastGuessQn = -1, guessIdx = -1, phase = 'intro';
-
-function weights(){
-  return items.map((it,i) => {
-    if(excluded.has(i)) return 0;
-    let w = 1;
-    for(const {k,a} of answers){ if(a !== null) w *= lik(val(it,k), a); }
-    return w;
-  });
-}
-function best(W){
-  let tot = 0, top = -1, m = 0;
-  W.forEach((w,i) => { tot += w; if(w > m){ m = w; top = i; } });
-  return {top, p: tot ? m/tot : 0, tot};
-}
-function entropy(arr){
-  let s = 0; for(const x of arr) s += x; if(!s) return 0;
-  let h = 0; for(const x of arr){ if(x > 0){ const p = x/s; h -= p*Math.log2(p); } } return h;
-}
-function pickKey(W, tot){
-  const asked = new Set(answers.map(x => x.k));
-  const scored = [];
-  for(const k of KEYS){
-    if(asked.has(k)) continue;
-    const wy = [], wn = []; let py = 0;
-    items.forEach((it,i) => { const w = W[i]; if(!w) return; const v = val(it,k);
-      wy.push(w*lik(v,1)); wn.push(w*lik(v,0)); py += w*Math.min(.95, Math.max(.05, v)); });
-    py /= tot;
-    scored.push({k, s: py*entropy(wy) + (1-py)*entropy(wn)});
-  }
-  if(!scored.length) return null;
-  scored.sort((a,b) => a.s - b.s);
-  const near = scored.filter(x => x.s - scored[0].s < 0.04).slice(0,3);
-  return near[Math.floor(Math.random()*near.length)].k;
-}
-
-// 화면
 const card = document.getElementById('card');
-const ORD = ['첫','두','세','네','다섯','여섯','일곱','여덟','아홉','열','열한','열두','열세','열네','열다섯','열여섯','열일곱','열여덟','열아홉','스무'];
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
-
 function show(html){ card.classList.remove('fade'); void card.offsetWidth; card.innerHTML = html; card.classList.add('fade'); }
+const $ = id => document.getElementById(id);
 
 function ridge(n){
-  const svg = document.getElementById('ridge');
+  const svg = $('ridge');
   const xs = i => 12 + i*(376/19);
   const ys = i => i === 19 ? 14 : 58 - 30*Math.abs(Math.sin(i*2.1 + 0.7)) - i*0.6;
   let back = 'M0 96 L0 70', front = 'M0 96 L0 80';
@@ -418,42 +268,43 @@ function ridge(n){
     else dots += `<circle cx="${x}" cy="${y}" r="3" fill="var(--bg)" stroke="var(--ridge)" stroke-width="1.5"/>`;
   }
   svg.innerHTML = `<path d="${back}" fill="var(--ridge-back)"/><path d="${front}" fill="var(--ridge)"/>${dots}`;
-  document.getElementById('count').innerHTML = phase === 'intro'
-    ? `<b>20</b>개의 고개` : `<b>${Math.min(n,20)}</b> / 20 고개`;
+  $('count').innerHTML = phase === 'intro' ? `<b>20</b>개의 고개`
+    : n > 20 ? `<b>${n}</b> / ${limit} 고개 <span class="extra">연장전</span>` : `<b>${n}</b> / ${limit} 고개`;
 }
 
 function intro(){
-  phase = 'intro'; answers = []; excluded = new Set(); lastGuessQn = -1; cur = null;
-  buildItems(); ridge(0);
+  phase = 'intro'; cur = null; limit = BASE_LIMIT; endWrong = 0; extended = false;
+  learned = loadLearned();
+  E = Engine(DATA[theme], learned);
+  ridge(0);
   const T = THEMES[theme];
+  const learnedN = Object.keys(learned.items || {}).length;
   show(`
     <div class="seg" role="group" aria-label="주제">${Object.keys(THEMES).map(t => `<button class="seg-b" data-t="${t}" aria-pressed="${t === theme}">${THEMES[t].label}</button>`).join('')}</div>
     <h2 class="q">${T.prompt}</h2>
-    <p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 고개를 다 넘기 전에 맞혀 볼게요.</p>
+    <p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 헷갈리면 '아마도'나 '모르겠어요'를 눌러도 괜찮아요.</p>
     <div class="chips">${T.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
     <button class="primary big" id="start">생각했어요, 시작!</button>
-    <p class="note">지금 아는 ${theme === 'celeb' ? '사람' : '것'} ${items.length}${theme === 'celeb' ? '명' : '개'} · 못 맞히면 정답을 알려 주세요. 이 기기에서 다음부터 기억해요.</p>`);
+    <p class="note">아는 ${theme === 'celeb' ? '사람' : '것'} ${E.items.length}${T.unit} · 질문 ${E.KEYS.length}가지${learnedN ? ` · 이 기기에서 배운 것 ${learnedN}${T.unit}` : ''}</p>`);
   card.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if(b.dataset.t !== theme){ setTheme(b.dataset.t); intro(); } });
-  document.getElementById('start').onclick = next;
+  $('start').onclick = next;
 }
 
 function next(){
   phase = 'play';
-  const W = weights(); const {top, p, tot} = best(W);
-  const qn = answers.length;
-  if(top < 0 || !tot) return lose();
-  const k = qn < 20 ? pickKey(W, tot) : null;
-  if(qn >= 20 || !k || (p >= 0.82 && qn >= 4 && qn > lastGuessQn)) return guess(top);
-  ask(k, p);
+  const d = E.decide(limit);
+  if(d.type === 'none') return lose();
+  if(d.type === 'guess') return guess(d.i);
+  ask(d.k, d.p);
 }
 
 function ask(k, p){
-  phase = 'play'; cur = k; const qn = answers.length; ridge(qn);
-  if(p === undefined){ p = best(weights()).p; }
+  phase = 'play'; cur = k; const qn = E.st.answers.length; ridge(qn);
+  if(p === undefined){ const W = E.weights(); const tot = W.reduce((a,b)=>a+b,0); p = tot ? Math.max(...W)/tot : 0; }
   const label = p > .6 ? '거의 알 것 같아요' : p > .3 ? '감이 오고 있어요' : '아직 감 잡는 중';
   show(`
-    <span class="eyebrow">${ORD[qn]} 번째 고개</span>
-    <h2 class="q">${esc(Q[k])}</h2>
+    <span class="eyebrow">${ORD[qn] || (qn+1)+''} 번째 고개${qn >= 20 ? ' · 연장전' : ''}</span>
+    <h2 class="q">${esc(E.Q[k])}</h2>
     <div class="row">
       <button class="primary big" data-a="1">예</button>
       <button class="big" data-a="0">아니요</button>
@@ -468,71 +319,103 @@ function ask(k, p){
       <span class="hunch">${label}<i><span style="width:${Math.round(Math.min(1,p)*100)}%"></span></i></span>
     </div>`);
   card.querySelectorAll('[data-a]').forEach(b => b.onclick = () => answer(b.dataset.a === 'null' ? null : Number(b.dataset.a)));
-  document.getElementById('undo').onclick = undo;
+  $('undo').onclick = undo;
 }
 
-function answer(a){ if(phase !== 'play' || !cur) return; answers.push({k:cur, a}); cur = null; next(); }
-function undo(){ if(!answers.length) return; const last = answers.pop(); lastGuessQn = Math.min(lastGuessQn, answers.length - 1); ask(last.k); }
+function answer(a){ if(phase !== 'play' || !cur) return; E.st.answers.push({k:cur, a}); cur = null; next(); }
+function undo(){
+  if(!E.st.answers.length) return;
+  const last = E.st.answers.pop();
+  E.st.lastGuessQn = Math.min(E.st.lastGuessQn, E.st.answers.length - 1);
+  ask(last.k);
+}
 
 function guess(i){
-  phase = 'guess'; guessIdx = i; lastGuessQn = answers.length; ridge(answers.length);
+  phase = 'guess'; guessIdx = i; E.st.lastGuessQn = E.st.answers.length; ridge(E.st.answers.length);
+  const n = E.st.answers.length, again = E.st.excluded.size > 0;
   show(`
-    <span class="eyebrow">${answers.length}개의 고개를 넘었어요</span>
-    <h2 class="q">혹시 생각한 게…</h2>
-    <p class="answer">${esc(items[i].name)}</p>
+    <span class="eyebrow">${n}개의 고개를 넘었어요</span>
+    <h2 class="q">${again ? '그럼 혹시…' : '혹시 생각한 게…'}</h2>
+    <p class="answer">${esc(E.items[i].n)}</p>
     <div class="row">
       <button class="gold big" id="yes">맞아요!</button>
       <button class="big" id="no">아니에요</button>
     </div>`);
-  document.getElementById('yes').onclick = win;
-  document.getElementById('no').onclick = () => {
-    excluded.add(guessIdx);
-    if(answers.length >= 20) return lose();
+  $('yes').onclick = win;
+  $('no').onclick = () => {
+    E.st.excluded.add(guessIdx);
+    if(E.st.answers.length >= limit){
+      endWrong++;
+      if(endWrong >= END_GUESSES) return extended ? lose() : offerExtra();
+    }
     next();
   };
 }
 
+function offerExtra(){
+  phase = 'end'; ridge(E.st.answers.length);
+  show(`
+    <span class="eyebrow">스무 고개를 다 넘었어요</span>
+    <h2 class="q">아깝네요. 다섯 고개만 더 넘어 볼까요?</h2>
+    <p class="lead">질문을 다섯 개 더 하고 다시 맞혀 볼게요.</p>
+    <div class="row">
+      <button class="gold big" id="more">연장전 가기</button>
+      <button class="big" id="giveup">정답 알려 주기</button>
+    </div>`);
+  $('more').onclick = () => { extended = true; limit = BASE_LIMIT + EXTRA; endWrong = 0; next(); };
+  $('giveup').onclick = lose;
+}
+
+function remember(name){
+  learnInto(learned, name, E.st.answers);
+  return saveLearned(learned);
+}
+
 function win(){
-  phase = 'end'; ridge(answers.length);
-  const n = answers.length;
+  phase = 'end'; ridge(E.st.answers.length);
+  const n = E.st.answers.length, name = E.items[guessIdx].n;
+  remember(name);
   show(`
     <span class="eyebrow">맞혔어요</span>
-    <p class="answer">${esc(items[guessIdx].name)}</p>
-    <p class="lead">${n ? ORD[Math.max(0,n-1)] + ' 번째 고개에서 맞혔어요.' : '질문 없이 바로 맞혔어요.'} ${excluded.size ? `(${excluded.size}번 틀린 뒤에)` : ''}</p>
+    <p class="answer">${esc(name)}</p>
+    <p class="lead">${n ? ORD[Math.max(0,n-1)] + ' 번째 고개에서 맞혔어요.' : '질문 없이 바로 맞혔어요.'} ${E.st.excluded.size ? `(${E.st.excluded.size}번 틀린 뒤에)` : ''}</p>
+    <p class="note">이번 답들도 기록해 뒀어요. 플레이할수록 이 기기에서 더 잘 맞혀요.</p>
     <button class="primary big" id="again">한 번 더 하기</button>`);
-  document.getElementById('again').onclick = intro;
+  $('again').onclick = intro;
 }
 
 function lose(){
-  phase = 'end'; ridge(answers.length);
-  const W = weights();
-  const top = W.map((w,i) => ({w,i})).filter(x => x.w > 0).sort((a,b) => b.w - a.w).slice(0,4);
+  phase = 'end'; ridge(E.st.answers.length);
+  const T = THEMES[theme];
+  const top = E.top(4);
   show(`
-    <span class="eyebrow">스무 고개를 다 넘었어요</span>
-    <h2 class="q">제가 졌어요. ${theme === 'celeb' ? '누구를' : '무엇을'} 생각하셨어요?</h2>
-    ${top.length ? `<div class="chips">${top.map(x => `<button class="chip" data-n="${esc(items[x.i].name)}">${esc(items[x.i].name)}</button>`).join('')}</div>` : ''}
+    <span class="eyebrow">제가 졌어요</span>
+    <h2 class="q">${T.who} 생각하셨어요?</h2>
+    ${top.length ? `<div class="chips">${top.map(i => `<button class="chip" data-n="${esc(E.items[i].n)}">${esc(E.items[i].n)}</button>`).join('')}</div>` : ''}
     <form id="teach">
       <label class="note" for="answer">정답을 알려 주시면 다음엔 맞혀 볼게요</label>
-      <input type="text" id="answer" maxlength="20" placeholder="${esc(THEMES[theme].eg)}" autocomplete="off">
+      <input type="text" id="answer" maxlength="20" placeholder="${esc(T.eg)}" autocomplete="off" list="names">
+      <datalist id="names">${E.items.map(it => `<option value="${esc(it.n)}">`).join('')}</datalist>
       <button class="primary big" type="submit">알려 주기</button>
     </form>
     <button class="link" id="skip">그냥 다시 하기</button>`);
-  card.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { document.getElementById('answer').value = b.dataset.n; });
-  document.getElementById('skip').onclick = intro;
-  document.getElementById('teach').onsubmit = e => {
+  card.querySelectorAll('[data-n]').forEach(b => b.onclick = () => { $('answer').value = b.dataset.n; });
+  $('skip').onclick = intro;
+  $('teach').onsubmit = e => {
     e.preventDefault();
-    const name = document.getElementById('answer').value.trim().slice(0,20);
-    if(!name){ document.getElementById('answer').focus(); return; }
-    const ans = {};
-    answers.forEach(({k,a}) => { if(a !== null) ans[k] = a; });
-    const list = loadLearned(); list.push({name, ans});
-    const ok = saveLearned(list);
+    let name = $('answer').value.trim().slice(0,20);
+    if(!name){ $('answer').focus(); return; }
+    const known = E.find(name);
+    if(known !== undefined) name = E.items[known].n;   // 별명으로 써도 같은 항목으로
+    const ok = remember(name);
     show(`
       <span class="eyebrow">고마워요</span>
       <p class="answer">${esc(name)}</p>
-      <p class="lead">${ok ? '이 기기에 기억해 뒀어요. 다음 판부터는 맞혀 볼게요.' : '이 브라우저에서는 저장이 막혀 있어서 기억하지 못했어요.'}</p>
+      <p class="lead">${!ok ? '이 브라우저에서는 저장이 막혀 있어서 기억하지 못했어요.'
+        : known !== undefined ? '알고 있던 건데 놓쳤네요. 이번 답을 반영해서 다음엔 맞혀 볼게요.'
+        : '처음 듣는 거예요. 이 기기에 기억해 뒀다가 다음 판부터 맞혀 볼게요.'}</p>
       <button class="primary big" id="again">한 번 더 하기</button>`);
-    document.getElementById('again').onclick = intro;
+    $('again').onclick = intro;
   };
 }
 
@@ -543,8 +426,8 @@ document.addEventListener('keydown', e => {
 });
 
 intro();
+
 })();
 </script>
-
 </body>
 </html>
