@@ -42,8 +42,8 @@ if(window.claude && window.claude.use){
 }
 function track(name, params){ try{ if(window.gtag) window.gtag('event', name, Object.assign({theme, mode}, params || {})); }catch(e){} }
 const CLAUDE_THEMES = {
-  all:{label:'모든 것', chips:['무엇이든','동물','음식','물건','장소','캐릭터'], prompt:'머릿속에 무언가 하나를 떠올려 주세요.'},
-  celeb:{label:'인물', chips:['연예인','역사 인물','운동선수','캐릭터','유튜버'], prompt:'인물을 한 명 떠올려 주세요.'}
+  all:{label:'모든 것', chips:['무엇이든','동물','음식','물건','장소','캐릭터'], prompt:'아무거나 하나 떠올려 봐라잉. 이 할미가 다 맞혀 줄 텡께.'},
+  celeb:{label:'인물', chips:['연예인','역사 인물','운동선수','캐릭터','유튜버'], prompt:'누구든 한 사람 떠올려 봐. 할미가 사람 보는 눈은 있어야.'}
 };
 
 const card = document.getElementById('card');
@@ -86,13 +86,13 @@ function intro(){
   const labels = isC ? CLAUDE_THEMES : THEMES;
   const learnedN = Object.keys(learned.items || {}).length;
   const note = isC
-    ? (sampleFn ? 'Claude가 직접 질문을 만들어 추리해요. 내 Claude 사용량으로 돌아가요.' : `Claude가 직접 질문을 만들어 추리해요. 한 사람당 하루 ${SITE.perDevice || 10}판까지 할 수 있어요.`)
+    ? (sampleFn ? 'AI 할머니가 직접 질문을 만들어 추리해요. 내 Claude 사용량으로 돌아가요.' : `AI 할머니가 직접 질문을 만들어 추리해요. 한 사람당 하루 ${SITE.perDevice || 10}판까지 할 수 있어요.`)
     : `아는 ${theme === 'celeb' ? '사람' : '것'} ${E.items.length}${T.unit} · 질문 ${E.KEYS.length}가지${learnedN ? ` · 이 기기에서 배운 것 ${learnedN}${T.unit}` : ''}`;
   show(`
-    ${claudeReady() ? `<div class="seg" role="group" aria-label="모드"><button class="seg-b" data-m="basic" aria-pressed="${!isC}">기본</button><button class="seg-b" data-m="claude" aria-pressed="${isC}">Claude 추리</button></div>` : ''}
+    ${claudeReady() ? `<div class="seg" role="group" aria-label="모드"><button class="seg-b" data-m="basic" aria-pressed="${!isC}">기본</button><button class="seg-b" data-m="claude" aria-pressed="${isC}">시골 할머니</button></div>` : ''}
     <div class="seg" role="group" aria-label="주제">${Object.keys(labels).map(t => `<button class="seg-b" data-t="${t}" aria-pressed="${t === theme}">${labels[t].label}</button>`).join('')}</div>
     <h2 class="q">${T.prompt}</h2>
-    <p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 헷갈리면 '아마도'나 '모르겠어요'를 눌러도 괜찮아요.</p>
+    ${isC ? '<div class="granny"><span class="face" aria-hidden="true">👵</span><p class="bubble">스무고개로 이 할미를 이긴 사람은 여태 없었어야~ 어디 한번 덤벼 봐.</p></div>' : `<p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 헷갈리면 '아마도'나 '모르겠어요'를 눌러도 괜찮아요.</p>`}
     <div class="chips">${T.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
     <button class="primary big" id="start">생각했어요, 시작!</button>
     <p class="note">${note}</p>`);
@@ -239,23 +239,36 @@ document.addEventListener('keydown', e => {
   if(e.key === 'n' || e.key === 'N') f(mode === 'claude' ? '아니요' : 0);
 });
 
-// ───────── Claude 추리 모드 ─────────
-let cHist = [], cGame = '', cQ = null, cEndWrong = 0, cCtl = null, cGuessName = '', cTok = 0;
+// ───────── 시골 할머니 모드 (AI가 추리) ─────────
+let cHist = [], cGame = '', cQ = null, cEndWrong = 0, cCtl = null, cGuessName = '', cTok = 0, cQuip = '';
 const cQn = () => cHist.filter(h => h.t === 'q').length;
+const pick = arr => arr[Math.floor(Math.random() * arr.length)];
+const GRANNY = {
+  think: ['할미가 머리 굴리는 중이여', '가만 있어 봐, 감이 온다잉', '돋보기 좀 찾고…', '어디 보자~ 어디 보자~', '이 할미 촉이 발동 걸리는 중'],
+  winFast: ['봤냐? 이 할미 아직 안 죽었어야 😎', '아이고 싱거워라. 좀 어려운 걸로 가져와 봐', '이 정도는 눈 감고도 맞히제'],
+  win: ['그려그려, 할미가 맞혔제? 허허', '거 봐라, 할미 말이 맞다 했지', '이 할미 촉은 아직 쓸 만혀'],
+  winLate: ['휴… 진땀 뺐네. 그래도 맞혔으니 할미 승이여', '쪼까 헤맸어도 이긴 건 이긴 거여'],
+  wrong: ['아따, 안경을 안 써서 그려', '잠깐, 이건 연습이었어야', '귀가 어두워서 잘못 들었나 벼', '흠흠… 다시 간다잉'],
+  lose: ['아이고… 할미가 졌다. 이런 건 처음이여', '허 참, 우리 강아지 제법이네?', '이건 인정혀. 근데 다음엔 안 봐준다잉'],
+};
 const ERR = {
-  daily_limit: '오늘 준비된 Claude 추리 판이 다 찼어요. 내일 다시 오거나 기본 모드로 해 보세요.',
-  device_limit: '이 기기에서 오늘 할 수 있는 Claude 추리를 다 썼어요. 기본 모드로 해 보세요.',
-  turn_limit: '이번 판에서 쓸 수 있는 질문을 다 썼어요.',
-  unknown_game: '판 정보가 사라졌어요. 새로 시작해 주세요.',
-  rate_limited: 'Claude 사용량이 잠깐 몰렸어요. 조금 뒤에 다시 해 주세요.',
-  not_granted: 'Claude 사용을 허용하지 않아서 이 모드를 쓸 수 없어요. 기본 모드로 해 보세요.',
+  daily_limit: '오늘은 할미가 너무 많이 놀아서 힘들어야. 내일 다시 오든가 기본 모드로 해 봐.',
+  device_limit: '오늘 할미랑 놀 수 있는 판을 다 썼어야. 기본 모드로 해 봐.',
+  turn_limit: '이번 판은 질문을 너무 많이 해 부렀네. 새로 시작해 보자.',
+  unknown_game: '판 정보가 사라졌어야. 새로 시작해 줘.',
+  rate_limited: '사람이 너무 몰려서 할미가 정신이 없어야. 쪼까 있다가 다시 해 봐.',
+  not_granted: 'Claude 사용을 허용하지 않아서 할머니 모드를 쓸 수 없어요. 기본 모드로 해 보세요.',
 };
 
 async function claudeTurn(){
   if(sampleFn){
-    cCtl = new AbortController();
-    const o = await sampleFn.json(buildPrompt(theme, cHist), {modelTier:'quick', cache:false, signal:cCtl.signal});
-    const r = checkReply(o); if(!r) throw {code:'bad_reply'}; return r;
+    for(const strict of [false, true]){
+      cCtl = new AbortController();
+      const o = await sampleFn.json(buildPrompt(theme, cHist, strict), {modelTier:'quick', cache:false, signal:cCtl.signal})
+        .catch(e => { if(e && e.code === 'invalid_json') return null; throw e; });
+      const r = checkReply(o); if(r) return r;
+    }
+    throw {code:'bad_reply'};
   }
   let res;
   try{
@@ -268,18 +281,21 @@ async function claudeTurn(){
   const r = checkReply(j); if(!r) throw {code:'bad_reply'}; return r;
 }
 
-function cStart(){ cHist = []; cGame = ''; cEndWrong = 0; limit = CLAUDE_LIMIT; cNext(); }
+function granny(text){ return text ? `<div class="granny"><span class="face" aria-hidden="true">👵</span><p class="bubble">${esc(text)}</p></div>` : ''; }
+
+function cStart(){ cHist = []; cGame = ''; cEndWrong = 0; cQuip = ''; limit = CLAUDE_LIMIT; cNext(); }
 
 async function cNext(){
   phase = 'think'; ridge(cQn());
   show(`
-    <span class="eyebrow">${ORD[cQn()] || ''} 번째 고개</span>
-    <h2 class="q thinking">Claude가 생각하고 있어요<span class="dots"><i>.</i><i>.</i><i>.</i></span></h2>
-    <p class="note">보통 몇 초 걸려요.</p>`);
+    <span class="eyebrow">${ORD[cQn()] || ''} 번째 고개 · 시골 할머니</span>
+    <h2 class="q thinking">${pick(GRANNY.think)}<span class="dots"><i>.</i><i>.</i><i>.</i></span></h2>
+    ${granny(cQuip)}`);
   const tok = ++cTok; let r;
   try{ r = await claudeTurn(); }
   catch(e){ if(tok !== cTok) return; return cError(e && e.code, e && e.status, e && e.detail); }
   if(tok !== cTok || phase !== 'think') return;   // 그사이 처음으로 돌아갔으면 무시
+  cQuip = r.quip || '';
   if(r.type === 'guess' || cQn() >= CLAUDE_LIMIT + 2) return cGuess(r.type === 'guess' ? r.name : null);
   cAsk(r.question);
 }
@@ -289,8 +305,8 @@ function cError(code, status, detail){
   phase = 'end';
   const fatal = code in ERR && code !== 'rate_limited';
   show(`
-    <span class="eyebrow">잠깐만요</span>
-    <h2 class="q">${esc(ERR[code] || 'Claude가 잠깐 응답하지 않아요. 다시 시도해 주세요.')}</h2>
+    <span class="eyebrow">잠깐만</span>
+    <h2 class="q">${esc(ERR[code] || '할미가 깜빡 졸았네. 다시 해 봐.')}</h2>
     <div class="row">
       ${fatal ? '' : '<button class="primary big" id="retry">다시 시도</button>'}
       <button class="big" id="basic">기본 모드로</button>
@@ -305,7 +321,8 @@ function cError(code, status, detail){
 function cAsk(text){
   phase = 'play'; cQ = text; const qn = cQn(); ridge(qn);
   show(`
-    <span class="eyebrow">${ORD[qn] || (qn+1)} 번째 고개 · Claude</span>
+    <span class="eyebrow">${ORD[qn] || (qn+1)} 번째 고개 · 시골 할머니</span>
+    ${granny(cQuip)}
     <h2 class="q">${esc(text)}</h2>
     <div class="row">
       <button class="primary big" data-c="예">예</button>
@@ -325,7 +342,7 @@ function cAsk(text){
 function cAnswer(a){ if(phase !== 'play' || !cQ) return; cHist.push({t:'q', text:cQ, a}); cQ = null; cNext(); }
 function cUndo(){
   for(let i = cHist.length - 1; i >= 0; i--){
-    if(cHist[i].t === 'q'){ const last = cHist[i]; cHist = cHist.slice(0, i); return cAsk(last.text); }
+    if(cHist[i].t === 'q'){ const last = cHist[i]; cHist = cHist.slice(0, i); cQuip = '다시 물어볼 텡께 똑바로 답혀~'; return cAsk(last.text); }
   }
 }
 
@@ -334,8 +351,9 @@ function cGuess(name){
   phase = 'guess'; cGuessName = name; ridge(cQn());
   const again = cHist.some(h => h.t === 'g');
   show(`
-    <span class="eyebrow">${cQn()}개의 고개를 넘었어요 · Claude</span>
-    <h2 class="q">${again ? '그럼 혹시…' : '혹시 생각한 게…'}</h2>
+    <span class="eyebrow">${cQn()}개의 고개를 넘었어 · 시골 할머니</span>
+    ${granny(cQuip || (again ? '이번엔 진짜여' : '할미가 딱 보니께…'))}
+    <h2 class="q">${again ? '그럼 이거지?' : '네가 생각한 거, 이거지?'}</h2>
     <p class="answer">${esc(name)}</p>
     <div class="row">
       <button class="gold big" id="yes">맞아요!</button>
@@ -344,6 +362,7 @@ function cGuess(name){
   $('yes').onclick = cWin;
   $('no').onclick = () => {
     cHist.push({t:'g', name});
+    cQuip = pick(GRANNY.wrong);
     if(cQn() >= CLAUDE_LIMIT && ++cEndWrong >= CLAUDE_EXTRA_GUESSES) return cLose();
     cNext();
   };
@@ -360,11 +379,13 @@ function cWin(){
   phase = 'end'; ridge(cQn());
   cReport(true, cGuessName);
   const n = cQn(), wrong = cHist.filter(h => h.t === 'g').length;
+  const line = n <= 10 && !wrong ? pick(GRANNY.winFast) : n >= 18 || wrong >= 2 ? pick(GRANNY.winLate) : pick(GRANNY.win);
   show(`
-    <span class="eyebrow">Claude가 맞혔어요</span>
+    <span class="eyebrow">할머니가 맞혔어요</span>
     <p class="answer">${esc(cGuessName)}</p>
+    ${granny(line)}
     <p class="lead">${n ? ORD[Math.max(0, n-1)] + ' 번째 고개에서 맞혔어요.' : '질문 없이 바로 맞혔어요.'} ${wrong ? `(${wrong}번 틀린 뒤에)` : ''}</p>
-    <button class="primary big" id="again">한 번 더 하기</button>`);
+    <button class="primary big" id="again">한 판 더 붙기</button>`);
   $('again').onclick = intro;
 }
 
@@ -372,15 +393,16 @@ function cLose(){
   phase = 'end'; ridge(cQn());
   const wrong = cHist.filter(h => h.t === 'g').map(h => h.name);
   show(`
-    <span class="eyebrow">Claude가 졌어요</span>
-    <h2 class="q">${theme === 'celeb' ? '누구를' : '무엇을'} 생각하셨어요?</h2>
-    ${wrong.length ? `<p class="note">틀린 추측: ${wrong.map(esc).join(', ')}</p>` : ''}
+    <span class="eyebrow">할머니를 이겼어요 🏆</span>
+    ${granny(pick(GRANNY.lose))}
+    <h2 class="q">${theme === 'celeb' ? '대체 누구였어?' : '대체 뭐였어?'}</h2>
+    ${wrong.length ? `<p class="note">할머니의 헛다리: ${wrong.map(esc).join(', ')}</p>` : ''}
     <form id="teach">
-      <label class="note" for="answer">정답을 알려 주시면 게임 데이터를 늘리는 데 참고할게요</label>
+      <label class="note" for="answer">정답을 알려 주면 할머니가 다음엔 안 져요</label>
       <input type="text" id="answer" maxlength="20" placeholder="${esc(THEMES[theme].eg)}" autocomplete="off">
       <button class="primary big" type="submit">알려 주기</button>
     </form>
-    <button class="link" id="skip">그냥 다시 하기</button>`);
+    <button class="link" id="skip">안 알려 줌 (다시 하기)</button>`);
   $('skip').onclick = () => { cReport(false, ''); intro(); };
   $('teach').onsubmit = e => {
     e.preventDefault();
@@ -388,10 +410,10 @@ function cLose(){
     if(!name){ $('answer').focus(); return; }
     cReport(false, name);
     show(`
-      <span class="eyebrow">고마워요</span>
+      <span class="eyebrow">정답 공개</span>
       <p class="answer">${esc(name)}</p>
-      <p class="lead">${sampleFn || !SITE.workerUrl ? '다음엔 꼭 맞혀 볼게요.' : '알려 주신 정답은 게임 데이터를 늘리는 데 참고할게요.'}</p>
-      <button class="primary big" id="again">한 번 더 하기</button>`);
+      ${granny(`${name}? 아따, 그건 반칙이제~ 다음엔 안 속는다잉`)}
+      <button class="primary big" id="again">복수전 하기</button>`);
     $('again').onclick = intro;
   };
 }
