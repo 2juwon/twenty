@@ -12,6 +12,9 @@
 | `src/engine.js` | 추론 엔진 (질문 고르기, 확률 계산, 학습 반영) |
 | `src/ui.js` | 화면 |
 | `src/page.html` | 스타일과 기본 마크업 |
+| `src/claude_prompt.js` | Claude 추리 모드 프롬프트 (페이지와 서버가 같이 씀) |
+| `site.json` | 중계 서버 주소(`workerUrl`), 구글 애널리틱스 측정 ID(`gaId`) |
+| `worker/` | Claude 추리 중계 서버 (Cloudflare Workers) — [배포 방법](worker/README.md) |
 | `build.py` | 위 파일을 합쳐 `index.html`을 만든다 |
 
 `index.html`은 빌드 결과물이라 직접 고치지 말고 `src/`를 고친 뒤 `python3 build.py`를 실행한다.
@@ -35,3 +38,12 @@
 - 다음 질문은 답을 들은 뒤 남는 불확실성(기대 엔트로피)이 가장 작아지는 것을 고른다.
 - 확신이 86% 이상이면 20개 전에도 찍고, 20개가 끝나면 상위 후보를 3번까지 찍는다. 그래도 못 맞히면 5개 연장전.
 - 이기든 지든 그 판의 답을 브라우저에 기록해 다음 판부터 반영한다 (기기별 저장).
+
+## 모드
+
+- **기본:** 위 데이터와 엔진으로 맞혀요. 비용이 들지 않아요.
+- **Claude 추리:** Claude가 질문을 직접 만들어서 목록에 없는 것도 맞혀요. `site.json`에 `workerUrl`이 있을 때만 버튼이 보여요. claude.ai에서 열면 중계 서버 없이 보는 사람의 Claude 사용량으로 돌아가요.
+
+## 접속 통계
+
+`site.json`의 `gaId`에 구글 애널리틱스 측정 ID(`G-...`)를 넣고 빌드하면 GitHub Pages 버전에 GA가 붙어요. 보내는 이벤트는 `game_start`와 `game_end`예요. 주제·모드·결과·질문 수를 같이 보내요.

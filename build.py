@@ -75,11 +75,21 @@ def main():
         print('\n'.join(allerr)); sys.exit(1)
     (ROOT / 'src' / 'data.json').write_text(json.dumps(data, ensure_ascii=False), encoding='utf-8')
     page = (SRC / 'page.html').read_text(encoding='utf-8')
-    script = '<script>\n(function(){\nconst DATA = ' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n' \
+    site = json.loads((ROOT / 'site.json').read_text(encoding='utf-8'))
+    prompt_js = re.sub(r'(?m)^export ', '', (SRC / 'claude_prompt.js').read_text(encoding='utf-8'))
+    def script_for(cfg):
+        return '<script>\n(function(){\nconst SITE = ' + json.dumps(cfg, ensure_ascii=False) + ';\nconst DATA = ' + json.dumps(data, ensure_ascii=False, separators=(',', ':')) + ';\n' \
+        + prompt_js + '\n' \
         + (SRC / 'engine.js').read_text(encoding='utf-8').replace("if(typeof module !== 'undefined') module.exports = {Engine, learnInto, CONFIG, norm};", '') \
         + '\n' + (SRC / 'ui.js').read_text(encoding='utf-8') + '\n})();\n</script>\n'
-    body = page + '\n' + script
-    (ROOT / 'page.html').write_text(body, encoding='utf-8')
+    # claude.ai 페이지: 외부 요청이 막혀 있으니 중계 서버·GA 없이 (Claude는 sample 기능으로)
+    (ROOT / 'page.html').write_text(page + '\n' + script_for({'workerUrl': '', 'perDevice': site.get('perDevice', 10)}), encoding='utf-8')
+    ga = ''
+    if site.get('gaId'):
+        gid = site['gaId']
+        ga = (f'<script async src="https://www.googletagmanager.com/gtag/js?id={gid}"></script>\n'
+              f"<script>window.dataLayer=window.dataLayer||[];function gtag(){{dataLayer.push(arguments);}}gtag('js',new Date());gtag('config','{gid}');</script>\n")
+    body = page + '\n' + ga + script_for({'workerUrl': site.get('workerUrl', '').rstrip('/'), 'perDevice': site.get('perDevice', 10)})
     shell = ('<!doctype html>\n<html lang="ko">\n<head>\n<meta charset="utf-8">\n'
              '<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">\n'
              '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>\n'

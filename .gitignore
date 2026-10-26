@@ -1,2 +1,5 @@
 /page.html
 /src/data.json
+node_modules/
+.wrangler/
+.dev.vars

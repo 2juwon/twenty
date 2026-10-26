@@ -32,6 +32,20 @@ function saveLearned(L){ try{ localStorage.setItem(storeKey(), JSON.stringify(L)
 function setTheme(t){ theme = THEMES[t] ? t : 'all'; try{ localStorage.setItem('seumugogae-theme', theme); }catch(e){} }
 try{ setTheme(localStorage.getItem('seumugogae-theme') || 'all'); }catch(e){ setTheme('all'); }
 
+// 모드: basic = 데이터 기반 엔진, claude = Claude가 추리
+let mode = 'basic', sampleFn = null;
+try{ mode = localStorage.getItem('seumugogae-mode') === 'claude' ? 'claude' : 'basic'; }catch(e){}
+function setMode(m){ mode = m; try{ localStorage.setItem('seumugogae-mode', m); }catch(e){} }
+const claudeReady = () => !!sampleFn || !!(SITE.workerUrl && !window.claude);
+if(window.claude && window.claude.use){
+  window.claude.use('sample').then(s => { if(s){ sampleFn = s; if(phase === 'intro') intro(); } }).catch(() => {});
+}
+function track(name, params){ try{ if(window.gtag) window.gtag('event', name, Object.assign({theme, mode}, params || {})); }catch(e){} }
+const CLAUDE_THEMES = {
+  all:{label:'모든 것', chips:['무엇이든','동물','음식','물건','장소','캐릭터'], prompt:'머릿속에 무언가 하나를 떠올려 주세요.'},
+  celeb:{label:'인물', chips:['연예인','역사 인물','운동선수','캐릭터','유튜버'], prompt:'인물을 한 명 떠올려 주세요.'}
+};
+
 const card = document.getElementById('card');
 const esc = s => String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 function show(html){ card.classList.remove('fade'); void card.offsetWidth; card.innerHTML = html; card.classList.add('fade'); }
@@ -61,21 +75,30 @@ function ridge(n){
 }
 
 function intro(){
+  cTok++; if(cCtl){ try{ cCtl.abort(); }catch(e){} cCtl = null; }
   phase = 'intro'; cur = null; limit = BASE_LIMIT; endWrong = 0; extended = false;
   learned = loadLearned();
   E = Engine(DATA[theme], learned);
   ridge(0);
-  const T = THEMES[theme];
+  if(mode === 'claude' && !claudeReady()) mode = 'basic';
+  const isC = mode === 'claude';
+  const T = isC ? CLAUDE_THEMES[theme] : THEMES[theme];
+  const labels = isC ? CLAUDE_THEMES : THEMES;
   const learnedN = Object.keys(learned.items || {}).length;
+  const note = isC
+    ? (sampleFn ? 'Claude가 직접 질문을 만들어 추리해요. 내 Claude 사용량으로 돌아가요.' : `Claude가 직접 질문을 만들어 추리해요. 한 사람당 하루 ${SITE.perDevice || 10}판까지 할 수 있어요.`)
+    : `아는 ${theme === 'celeb' ? '사람' : '것'} ${E.items.length}${T.unit} · 질문 ${E.KEYS.length}가지${learnedN ? ` · 이 기기에서 배운 것 ${learnedN}${T.unit}` : ''}`;
   show(`
-    <div class="seg" role="group" aria-label="주제">${Object.keys(THEMES).map(t => `<button class="seg-b" data-t="${t}" aria-pressed="${t === theme}">${THEMES[t].label}</button>`).join('')}</div>
+    ${claudeReady() ? `<div class="seg" role="group" aria-label="모드"><button class="seg-b" data-m="basic" aria-pressed="${!isC}">기본</button><button class="seg-b" data-m="claude" aria-pressed="${isC}">Claude 추리</button></div>` : ''}
+    <div class="seg" role="group" aria-label="주제">${Object.keys(labels).map(t => `<button class="seg-b" data-t="${t}" aria-pressed="${t === theme}">${labels[t].label}</button>`).join('')}</div>
     <h2 class="q">${T.prompt}</h2>
     <p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 헷갈리면 '아마도'나 '모르겠어요'를 눌러도 괜찮아요.</p>
     <div class="chips">${T.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
     <button class="primary big" id="start">생각했어요, 시작!</button>
-    <p class="note">아는 ${theme === 'celeb' ? '사람' : '것'} ${E.items.length}${T.unit} · 질문 ${E.KEYS.length}가지${learnedN ? ` · 이 기기에서 배운 것 ${learnedN}${T.unit}` : ''}</p>`);
+    <p class="note">${note}</p>`);
   card.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if(b.dataset.t !== theme){ setTheme(b.dataset.t); intro(); } });
-  $('start').onclick = next;
+  card.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { if(b.dataset.m !== mode){ setMode(b.dataset.m); intro(); } });
+  $('start').onclick = () => { track('game_start'); isC ? cStart() : next(); };
 }
 
 function next(){
@@ -163,6 +186,7 @@ function win(){
   phase = 'end'; ridge(E.st.answers.length);
   const n = E.st.answers.length, name = E.items[guessIdx].n;
   remember(name);
+  track('game_end', {result:'win', questions:n});
   show(`
     <span class="eyebrow">맞혔어요</span>
     <p class="answer">${esc(name)}</p>
@@ -176,6 +200,7 @@ function lose(){
   phase = 'end'; ridge(E.st.answers.length);
   const T = THEMES[theme];
   const top = E.top(4);
+  track('game_end', {result:'lose', questions:E.st.answers.length});
   show(`
     <span class="eyebrow">제가 졌어요</span>
     <h2 class="q">${T.who} 생각하셨어요?</h2>
@@ -209,8 +234,165 @@ function lose(){
 
 document.addEventListener('keydown', e => {
   if(phase !== 'play' || e.target.tagName === 'INPUT') return;
-  if(e.key === 'y' || e.key === 'Y') answer(1);
-  if(e.key === 'n' || e.key === 'N') answer(0);
+  const f = mode === 'claude' ? cAnswer : answer;
+  if(e.key === 'y' || e.key === 'Y') f(mode === 'claude' ? '예' : 1);
+  if(e.key === 'n' || e.key === 'N') f(mode === 'claude' ? '아니요' : 0);
 });
+
+// ───────── Claude 추리 모드 ─────────
+let cHist = [], cGame = '', cQ = null, cEndWrong = 0, cCtl = null, cGuessName = '', cTok = 0;
+const cQn = () => cHist.filter(h => h.t === 'q').length;
+const ERR = {
+  daily_limit: '오늘 준비된 Claude 추리 판이 다 찼어요. 내일 다시 오거나 기본 모드로 해 보세요.',
+  device_limit: '이 기기에서 오늘 할 수 있는 Claude 추리를 다 썼어요. 기본 모드로 해 보세요.',
+  turn_limit: '이번 판에서 쓸 수 있는 질문을 다 썼어요.',
+  unknown_game: '판 정보가 사라졌어요. 새로 시작해 주세요.',
+  rate_limited: 'Claude 사용량이 잠깐 몰렸어요. 조금 뒤에 다시 해 주세요.',
+  not_granted: 'Claude 사용을 허용하지 않아서 이 모드를 쓸 수 없어요. 기본 모드로 해 보세요.',
+};
+
+async function claudeTurn(){
+  if(sampleFn){
+    cCtl = new AbortController();
+    const o = await sampleFn.json(buildPrompt(theme, cHist), {modelTier:'quick', cache:false, signal:cCtl.signal});
+    const r = checkReply(o); if(!r) throw {code:'bad_reply'}; return r;
+  }
+  let res;
+  try{
+    res = await fetch(SITE.workerUrl + '/api/turn', {method:'POST', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({theme, history:cHist, gameId:cGame || undefined})});
+  }catch(e){ throw {code:'network'}; }
+  const j = await res.json().catch(() => ({}));
+  if(j.gameId) cGame = j.gameId;
+  if(!res.ok) throw {code: j.error || 'upstream'};
+  const r = checkReply(j); if(!r) throw {code:'bad_reply'}; return r;
+}
+
+function cStart(){ cHist = []; cGame = ''; cEndWrong = 0; limit = CLAUDE_LIMIT; cNext(); }
+
+async function cNext(){
+  phase = 'think'; ridge(cQn());
+  show(`
+    <span class="eyebrow">${ORD[cQn()] || ''} 번째 고개</span>
+    <h2 class="q thinking">Claude가 생각하고 있어요<span class="dots"><i>.</i><i>.</i><i>.</i></span></h2>
+    <p class="note">보통 몇 초 걸려요.</p>`);
+  const tok = ++cTok; let r;
+  try{ r = await claudeTurn(); }
+  catch(e){ if(tok !== cTok) return; return cError(e && e.code); }
+  if(tok !== cTok || phase !== 'think') return;   // 그사이 처음으로 돌아갔으면 무시
+  if(r.type === 'guess' || cQn() >= CLAUDE_LIMIT + 2) return cGuess(r.type === 'guess' ? r.name : null);
+  cAsk(r.question);
+}
+
+function cError(code){
+  if(code === 'cancelled') return;
+  phase = 'end';
+  const fatal = code in ERR && code !== 'rate_limited';
+  show(`
+    <span class="eyebrow">잠깐만요</span>
+    <h2 class="q">${esc(ERR[code] || 'Claude가 잠깐 응답하지 않아요. 다시 시도해 주세요.')}</h2>
+    <div class="row">
+      ${fatal ? '' : '<button class="primary big" id="retry">다시 시도</button>'}
+      <button class="big" id="basic">기본 모드로</button>
+    </div>
+    <button class="link" id="home">처음으로</button>`);
+  if($('retry')) $('retry').onclick = cNext;
+  $('basic').onclick = () => { setMode('basic'); intro(); };
+  $('home').onclick = intro;
+}
+
+function cAsk(text){
+  phase = 'play'; cQ = text; const qn = cQn(); ridge(qn);
+  show(`
+    <span class="eyebrow">${ORD[qn] || (qn+1)} 번째 고개 · Claude</span>
+    <h2 class="q">${esc(text)}</h2>
+    <div class="row">
+      <button class="primary big" data-c="예">예</button>
+      <button class="big" data-c="아니요">아니요</button>
+    </div>
+    <div class="row3">
+      <button class="soft" data-c="아마도">아마도요</button>
+      <button class="soft" data-c="모르겠어요">모르겠어요</button>
+      <button class="soft" data-c="아마 아니요">아마 아니요</button>
+    </div>
+    <div class="foot">
+      <button class="link" id="undo" ${qn ? '' : 'disabled'}>이전 질문으로</button>
+    </div>`);
+  card.querySelectorAll('[data-c]').forEach(b => b.onclick = () => cAnswer(b.dataset.c));
+  $('undo').onclick = cUndo;
+}
+function cAnswer(a){ if(phase !== 'play' || !cQ) return; cHist.push({t:'q', text:cQ, a}); cQ = null; cNext(); }
+function cUndo(){
+  for(let i = cHist.length - 1; i >= 0; i--){
+    if(cHist[i].t === 'q'){ const last = cHist[i]; cHist = cHist.slice(0, i); return cAsk(last.text); }
+  }
+}
+
+function cGuess(name){
+  if(!name) return cLose();
+  phase = 'guess'; cGuessName = name; ridge(cQn());
+  const again = cHist.some(h => h.t === 'g');
+  show(`
+    <span class="eyebrow">${cQn()}개의 고개를 넘었어요 · Claude</span>
+    <h2 class="q">${again ? '그럼 혹시…' : '혹시 생각한 게…'}</h2>
+    <p class="answer">${esc(name)}</p>
+    <div class="row">
+      <button class="gold big" id="yes">맞아요!</button>
+      <button class="big" id="no">아니에요</button>
+    </div>`);
+  $('yes').onclick = cWin;
+  $('no').onclick = () => {
+    cHist.push({t:'g', name});
+    if(cQn() >= CLAUDE_LIMIT && ++cEndWrong >= CLAUDE_EXTRA_GUESSES) return cLose();
+    cNext();
+  };
+}
+
+function cReport(won, name){
+  track('game_end', {result: won ? 'win' : 'lose', questions: cQn()});
+  if(sampleFn || !SITE.workerUrl || !cGame) return;
+  fetch(SITE.workerUrl + '/api/result', {method:'POST', headers:{'Content-Type':'application/json'},
+    body: JSON.stringify({gameId:cGame, theme, won, name, questions:cQn()})}).catch(() => {});
+}
+
+function cWin(){
+  phase = 'end'; ridge(cQn());
+  cReport(true, cGuessName);
+  const n = cQn(), wrong = cHist.filter(h => h.t === 'g').length;
+  show(`
+    <span class="eyebrow">Claude가 맞혔어요</span>
+    <p class="answer">${esc(cGuessName)}</p>
+    <p class="lead">${n ? ORD[Math.max(0, n-1)] + ' 번째 고개에서 맞혔어요.' : '질문 없이 바로 맞혔어요.'} ${wrong ? `(${wrong}번 틀린 뒤에)` : ''}</p>
+    <button class="primary big" id="again">한 번 더 하기</button>`);
+  $('again').onclick = intro;
+}
+
+function cLose(){
+  phase = 'end'; ridge(cQn());
+  const wrong = cHist.filter(h => h.t === 'g').map(h => h.name);
+  show(`
+    <span class="eyebrow">Claude가 졌어요</span>
+    <h2 class="q">${theme === 'celeb' ? '누구를' : '무엇을'} 생각하셨어요?</h2>
+    ${wrong.length ? `<p class="note">틀린 추측: ${wrong.map(esc).join(', ')}</p>` : ''}
+    <form id="teach">
+      <label class="note" for="answer">정답을 알려 주시면 게임 데이터를 늘리는 데 참고할게요</label>
+      <input type="text" id="answer" maxlength="20" placeholder="${esc(THEMES[theme].eg)}" autocomplete="off">
+      <button class="primary big" type="submit">알려 주기</button>
+    </form>
+    <button class="link" id="skip">그냥 다시 하기</button>`);
+  $('skip').onclick = () => { cReport(false, ''); intro(); };
+  $('teach').onsubmit = e => {
+    e.preventDefault();
+    const name = $('answer').value.trim().slice(0, 20);
+    if(!name){ $('answer').focus(); return; }
+    cReport(false, name);
+    show(`
+      <span class="eyebrow">고마워요</span>
+      <p class="answer">${esc(name)}</p>
+      <p class="lead">${sampleFn || !SITE.workerUrl ? '다음엔 꼭 맞혀 볼게요.' : '알려 주신 정답은 게임 데이터를 늘리는 데 참고할게요.'}</p>
+      <button class="primary big" id="again">한 번 더 하기</button>`);
+    $('again').onclick = intro;
+  };
+}
 
 intro();
