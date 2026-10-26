@@ -4,8 +4,10 @@
 // - 끝난 판의 결과(특히 못 맞힌 정답)를 모아 데이터 보강에 쓴다
 import { DurableObject } from 'cloudflare:workers';
 import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESSES } from '../../src/claude_prompt.js';
+export { Room } from './room.js';
+const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-const VERSION = '2026-10-26d';   // 배포 확인용
+const VERSION = '2026-10-27a';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {
@@ -29,9 +31,35 @@ export default {
       return json(await limiter.stats(Number(env.DAILY_GAMES || 100)));
     }
 
+    // 후엠아이: 방 접속 (WebSocket)
+    const wsMatch = url.pathname.match(/^\/api\/room\/([A-Z0-9]{5})\/ws$/);
+    if(wsMatch && req.method === 'GET'){
+      if(allowed.length && !allowed.includes(origin)) return new Response('forbidden', {status: 403});
+      const room = env.ROOM.get(env.ROOM.idFromName(wsMatch[1]));
+      if(!(await room.exists())) return new Response('no room', {status: 404});
+      return room.fetch(req);
+    }
+
     if(req.method !== 'POST') return json({error: 'not_found'}, 404);
     if(allowed.length && !allowed.includes(origin)) return json({error: 'forbidden'}, 403);
     let body; try{ body = await req.json(); }catch(e){ return json({error: 'bad_request'}, 400); }
+
+    // 후엠아이: 방 만들기
+    if(url.pathname === '/api/room'){
+      const ipHash = await sha(req.headers.get('CF-Connecting-IP') || 'unknown', env.STATS_TOKEN || 'salt');
+      const isDev = !!env.STATS_TOKEN && body.dev === env.STATS_TOKEN;
+      const gate = await limiter.roomStart(isDev ? 'dev' : ipHash, Number(env.DAILY_ROOMS_PER_DEVICE || 30));
+      if(!gate.ok) return json({error: gate.reason}, 429);
+      for(let tries = 0; tries < 5; tries++){
+        let code = ''; const rnd = crypto.getRandomValues(new Uint8Array(5));
+        for(const b of rnd) code += CODE_CHARS[b % CODE_CHARS.length];
+        const room = env.ROOM.get(env.ROOM.idFromName(code));
+        if(await room.exists()) continue;
+        await room.init(code);
+        return json({code});
+      }
+      return json({error: 'busy'}, 503);
+    }
 
     if(url.pathname === '/api/result'){
       const r = body || {};
@@ -120,7 +148,8 @@ export class Limiter extends DurableObject {
     this.sql.exec(`CREATE TABLE IF NOT EXISTS games(id TEXT PRIMARY KEY, day TEXT, ip TEXT, turns INTEGER, created INTEGER);
       CREATE TABLE IF NOT EXISTS results(id TEXT, day TEXT, theme TEXT, won INTEGER, name TEXT, questions INTEGER, created INTEGER);
       CREATE INDEX IF NOT EXISTS games_day ON games(day);
-      CREATE TABLE IF NOT EXISTS bad(created INTEGER, info TEXT, text TEXT);`);
+      CREATE TABLE IF NOT EXISTS bad(created INTEGER, info TEXT, text TEXT);
+      CREATE TABLE IF NOT EXISTS rooms(day TEXT, ip TEXT, created INTEGER);`);
   }
   async start(ip, dailyLimit, perDevice){
     const day = today();
@@ -132,6 +161,14 @@ export class Limiter extends DurableObject {
     this.sql.exec('INSERT INTO games VALUES (?, ?, ?, 1, ?)', id, day, ip, Date.now());
     if(Math.random() < 0.05) this.sql.exec('DELETE FROM games WHERE created < ?', Date.now() - 14 * 86400e3);
     return {ok: true, gameId: id};
+  }
+  async roomStart(ip, perDevice){
+    const day = today();
+    const mine = this.sql.exec('SELECT COUNT(*) c FROM rooms WHERE day = ? AND ip = ?', day, ip).one().c;
+    if(ip !== 'dev' && mine >= perDevice) return {ok: false, reason: 'room_limit'};
+    this.sql.exec('INSERT INTO rooms VALUES (?, ?, ?)', day, ip, Date.now());
+    if(Math.random() < 0.05) this.sql.exec('DELETE FROM rooms WHERE created < ?', Date.now() - 14 * 86400e3);
+    return {ok: true};
   }
   async cancel(id){ this.sql.exec('DELETE FROM games WHERE id = ?', id); }
   async refundTurn(id){ this.sql.exec('UPDATE games SET turns = MAX(turns - 1, 0) WHERE id = ?', id); }
@@ -161,6 +198,7 @@ export class Limiter extends DurableObject {
     const missed = this.sql.exec(`SELECT theme, name, COUNT(*) times FROM results WHERE won = 0 AND name <> '' GROUP BY theme, name ORDER BY times DESC LIMIT 100`).toArray();
     const bad = this.sql.exec('SELECT created, info, text FROM bad ORDER BY created DESC LIMIT 10').toArray()
       .map(b => ({at: new Date(b.created + 9 * 3600e3).toISOString().slice(0, 19).replace('T', ' '), info: b.info, text: b.text}));
-    return {version: VERSION, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, testGames: d.games, testApiCalls: d.calls, estCostUSD: +((g.calls + d.calls) * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
+    const rooms = this.sql.exec('SELECT COUNT(*) c FROM rooms WHERE day = ?', day).one().c;
+    return {version: VERSION, whoamiRoomsToday: rooms, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, testGames: d.games, testApiCalls: d.calls, estCostUSD: +((g.calls + d.calls) * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
   }
 }

@@ -95,6 +95,11 @@ def main():
              '<style>:root{padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}body{margin:0}[hidden]{display:none!important}</style>\n'
              '</head>\n<body>\n' + body + '</body>\n</html>\n')
     (ROOT / 'index.html').write_text(shell, encoding='utf-8')
-    print('빌드 완료: index.html, page.html')
+    # 후엠아이 온라인 (GitHub Pages 전용: 실시간 연결이 필요해서 claude.ai 페이지는 없음)
+    who = (SRC / 'whoami.html').read_text(encoding='utf-8')
+    site_js = '<script>window.__SITE__ = ' + json.dumps({'workerUrl': site.get('workerUrl', '').rstrip('/')}) + ';</script>\n'
+    (ROOT / 'whoami').mkdir(exist_ok=True)
+    (ROOT / 'whoami' / 'index.html').write_text(shell.replace(body, ga + site_js + who), encoding='utf-8')
+    print('빌드 완료: index.html, page.html, whoami/index.html')
 
 main()

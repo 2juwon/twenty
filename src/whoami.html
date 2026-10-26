@@ -1,0 +1,405 @@
+<title>후엠아이 온라인</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Black+Han+Sans&family=Gowun+Dodum&display=swap">
+<style>
+/* 레이아웃: 위에 방 정보와 차례, 가운데 참가자 카드(이마에 붙인 이름표), 아래에 내 행동과 질문 기록. 스무고개와 같은 색 체계 */
+:root{
+  --bg:#e9efec; --surface:#f7faf8; --ink:#1c2830; --muted:#5e6f6a;
+  --ridge:#7d9a8f; --accent:#d9971f; --accent-ink:#1c2830; --line:#cfdbd5;
+  --yes:#2f7d5b; --no:#b2463b; --tag:#fff4dc;
+  --display:"Black Han Sans","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+  --body:"Gowun Dodum","Apple SD Gothic Neo","Malgun Gothic",sans-serif;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#11191d; --surface:#18232a; --ink:#e4ece8; --muted:#94a8a1; --ridge:#6f9384;
+  --accent:#f0b443; --accent-ink:#11191d; --line:#2b3a3d; --yes:#5cc293; --no:#ef7f73; --tag:#3a3020; color-scheme:dark}}
+:root[data-theme="dark"]{
+  --bg:#11191d; --surface:#18232a; --ink:#e4ece8; --muted:#94a8a1; --ridge:#6f9384;
+  --accent:#f0b443; --accent-ink:#11191d; --line:#2b3a3d; --yes:#5cc293; --no:#ef7f73; --tag:#3a3020; color-scheme:dark}
+html,body{min-height:100%}
+body{background:var(--bg);color:var(--ink);font-family:var(--body);font-size:16px;line-height:1.55;padding-inline:16px}
+.wrap{max-width:680px;margin:0 auto;padding-block:20px 40px;display:flex;flex-direction:column;gap:16px}
+header{display:flex;align-items:baseline;justify-content:space-between;gap:12px;flex-wrap:wrap}
+h1{font-family:var(--display);font-weight:400;font-size:2rem;margin:0}
+h1 a{color:inherit;text-decoration:none}
+.back{color:var(--muted);font-size:.9rem}
+.card{background:var(--surface);border:1px solid var(--line);border-radius:18px;padding:20px;display:flex;flex-direction:column;gap:14px;min-width:0}
+.eyebrow{font-size:.85rem;color:var(--muted);letter-spacing:.06em}
+.q{font-family:var(--display);font-weight:400;font-size:1.5rem;line-height:1.35;margin:0;text-wrap:balance;word-break:keep-all}
+p{margin:0;word-break:keep-all}
+.lead{color:var(--muted)}
+.note{font-size:.85rem;color:var(--muted)}
+.row{display:flex;gap:10px;flex-wrap:wrap}
+.row > *{flex:1 1 140px}
+button{font:inherit;cursor:pointer;border-radius:12px;border:1.5px solid var(--ink);background:transparent;color:var(--ink);padding:12px 10px;transition:transform .08s ease}
+button:active{transform:scale(.97)}
+button:disabled{opacity:.4;cursor:default;transform:none}
+button:focus-visible,input:focus-visible{outline:3px solid var(--accent);outline-offset:2px}
+.big{font-family:var(--display);font-weight:400;font-size:1.2rem}
+.primary{background:var(--ink);color:var(--bg)}
+.gold{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.yes{background:var(--yes);border-color:var(--yes);color:#fff}
+.no{background:var(--no);border-color:var(--no);color:#fff}
+.soft{border-color:var(--line);font-size:.92rem;padding:9px 10px}
+.link{border:none;padding:4px 0;color:var(--muted);text-decoration:underline;text-underline-offset:3px;font-size:.9rem;flex:none}
+input[type=text]{font:inherit;font-size:1.05rem;padding:12px 14px;border-radius:12px;border:1.5px solid var(--line);background:var(--bg);color:var(--ink);width:100%;box-sizing:border-box;min-width:0}
+form{display:flex;flex-direction:column;gap:10px}
+.inline{display:flex;gap:8px}
+.inline input{flex:1}
+.inline button{flex:none}
+.chips{display:flex;flex-wrap:wrap;gap:8px}
+.chip{border:1px solid var(--line);border-radius:999px;padding:6px 12px;font-size:.92rem;color:var(--ink);background:transparent}
+.chip[aria-pressed="true"]{background:var(--ink);color:var(--bg);border-color:var(--ink)}
+.code{font-family:var(--display);font-size:2.4rem;letter-spacing:.18em;line-height:1}
+.players{display:flex;flex-direction:column;gap:6px;margin:0;padding:0;list-style:none}
+.players li{display:flex;align-items:center;gap:8px;padding:8px 12px;border:1px solid var(--line);border-radius:12px}
+.players li .nm{flex:1;min-width:0;overflow-wrap:anywhere}
+.badge{font-size:.75rem;border-radius:999px;padding:2px 8px;border:1px solid var(--line);color:var(--muted);white-space:nowrap}
+.badge.gold{background:var(--accent);color:var(--accent-ink);border-color:var(--accent)}
+.badge.off{opacity:.7}
+.grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(140px,1fr));gap:10px}
+.pc{border:1.5px solid var(--line);border-radius:14px;padding:10px 12px;display:flex;flex-direction:column;gap:6px;text-align:left;background:var(--surface);min-width:0}
+.pc.turn{border-color:var(--accent);box-shadow:0 0 0 2px var(--accent) inset}
+.pc.sel{background:var(--bg)}
+.pc .who{display:flex;justify-content:space-between;gap:6px;font-size:.9rem;color:var(--muted)}
+.pc .who b{color:var(--ink);font-weight:400;overflow-wrap:anywhere}
+.tag{font-family:var(--display);font-size:1.15rem;background:var(--tag);border-radius:8px;padding:6px 8px;overflow-wrap:anywhere}
+.tag.hidden{color:var(--muted);letter-spacing:.2em}
+.meter{height:5px;border-radius:3px;background:var(--line);overflow:hidden}
+.meter span{display:block;height:100%;background:var(--accent)}
+.log{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.log li{border-bottom:1px solid var(--line);padding-bottom:8px;display:flex;flex-direction:column;gap:6px}
+.log .l1{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap}
+.log .n{font-variant-numeric:tabular-nums;color:var(--muted);font-size:.85rem;min-width:1.6em}
+.log .qt{flex:1;min-width:0;overflow-wrap:anywhere}
+.ans{font-weight:700;white-space:nowrap}
+.ans.yes,.ans.correct{color:var(--yes)} .ans.no,.ans.wrong{color:var(--no)} .ans.unsure{color:var(--muted)}
+.ans.yes,.ans.no{background:none;border:none}
+.vote{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
+.banner{background:var(--tag);border-radius:12px;padding:10px 14px;font-size:.92rem}
+.pending{border:1.5px dashed var(--accent);border-radius:14px;padding:14px;display:flex;flex-direction:column;gap:10px}
+.rank{display:flex;flex-direction:column;gap:8px;margin:0;padding:0;list-style:none}
+.rank li{display:grid;grid-template-columns:2.4em 1fr;gap:4px 10px;align-items:baseline;border:1px solid var(--line);border-radius:12px;padding:10px 12px}
+.rank .r{font-family:var(--display);font-size:1.4rem;grid-row:span 2}
+.toast{position:fixed;left:50%;bottom:calc(16px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:var(--ink);color:var(--bg);padding:10px 16px;border-radius:12px;font-size:.92rem;max-width:calc(100% - 32px)}
+.conn{font-size:.85rem;color:var(--no)}
+@media (prefers-reduced-motion:reduce){button{transition:none}}
+</style>
+
+<div class="wrap">
+  <header>
+    <h1><a href="./">후엠아이</a></h1>
+    <a class="back" href="../">← 스무고개로</a>
+  </header>
+  <main id="app" class="card"></main>
+  <p class="conn" id="conn" hidden>연결이 끊겼어요. 다시 연결하는 중…</p>
+</div>
+<div class="toast" id="toast" hidden></div>
+
+<script>
+(function(){
+const SITE = window.__SITE__ || {workerUrl: ''};
+const TOPICS = ['연예인','동물','음식','만화·애니 캐릭터','직업','운동선수','역사 인물','영화','나라','과일','브랜드','게임 캐릭터','유튜버','동화 속 인물','물건'];
+const RANDOM_TOPICS = ['편의점에서 파는 것','무인도에 가져갈 것','냉장고 속에 있는 것','학교에 있는 것','여름 하면 떠오르는 것','갖고 싶은 초능력','디저트','놀이공원 놀이기구','회사에 있는 것','지하철에서 볼 수 있는 것','캠핑 준비물','드라마 주인공','디즈니 캐릭터','라면 종류','영화 속 악당','문구류','반려동물','명절 음식','K-POP 아이돌','주방 도구','세계의 관광지','과자 이름','악기','보드게임','동요 제목'];
+const ERR = {
+  started:'이미 시작한 방이에요. 끝나고 다시 들어와 주세요.', full:'방이 꽉 찼어요 (최대 8명).', no_name:'닉네임을 적어 주세요.',
+  no_room:'없는 방이에요. 방 코드를 확인해 주세요.', no_topic:'주제를 먼저 정해 주세요.', not_enough:'3명 이상 모여야 시작할 수 있어요.',
+  room_limit:'오늘은 이 기기에서 방을 너무 많이 만들었어요. 내일 다시 해 주세요.', empty:'내용을 적어 주세요.', not_allowed:'지금은 할 수 없어요.',
+};
+const ANS = {yes:'예', no:'아니요', unsure:'애매해요', correct:'정답!', wrong:'땡'};
+
+const app = document.getElementById('app');
+const $ = id => document.getElementById(id);
+const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const ls = {get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }};
+let toastT;
+function toast(msg){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
+function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params || {}); }catch(e){} }
+
+let ws = null, code = '', S = null, sel = null, retry = 0, pingT = null, wantOpen = false, myWritten = '';
+const devToken = (() => { try{ return localStorage.getItem('seumugogae-dev') || ''; }catch(e){ return ''; } })();
+
+// ───── 처음 화면 ─────
+function home(prefill){
+  wantOpen = false; if(ws) try{ ws.close(); }catch(e){}
+  S = null; code = '';
+  const name = ls.get('whoami-name') || '';
+  if(!SITE.workerUrl){ app.innerHTML = `<p class="lead">이 페이지는 GitHub Pages 주소에서만 온라인으로 할 수 있어요.</p>`; return; }
+  app.innerHTML = `
+    <span class="eyebrow">온라인 후엠아이 · 3~8명</span>
+    <h2 class="q">내 이마에 붙은 정답은 나만 몰라요.</h2>
+    <p class="lead">방장이 주제를 정하면 각자 옆 사람의 정답을 몰래 적어요. 예/아니요 질문으로 스무 고개 안에 내 정답을 맞혀 보세요.</p>
+    <form id="f">
+      <label class="note" for="nm">닉네임</label>
+      <input type="text" id="nm" maxlength="12" value="${esc(name)}" placeholder="예: 주원" autocomplete="nickname">
+      <div class="row">
+        <button class="primary big" type="button" id="create">방 만들기</button>
+      </div>
+      <label class="note" for="cd">초대받은 방 코드</label>
+      <div class="inline">
+        <input type="text" id="cd" maxlength="5" value="${esc(prefill || '')}" placeholder="예: K7QM2" autocapitalize="characters" autocomplete="off">
+        <button class="big" type="submit">들어가기</button>
+      </div>
+    </form>`;
+  const getName = () => { const n = $('nm').value.trim(); if(!n){ $('nm').focus(); toast('닉네임을 적어 주세요.'); return ''; } ls.set('whoami-name', n); return n; };
+  $('create').onclick = async () => {
+    const n = getName(); if(!n) return;
+    $('create').disabled = true;
+    try{
+      const r = await fetch(SITE.workerUrl + '/api/room', {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({dev: devToken || undefined})});
+      const j = await r.json().catch(() => ({}));
+      if(!r.ok || !j.code) throw new Error(j.error || 'error');
+      track('whoami_create'); enter(j.code, n);
+    }catch(e){ toast(ERR[e.message] || '방을 만들지 못했어요. 잠시 뒤 다시 해 주세요.'); $('create').disabled = false; }
+  };
+  $('f').onsubmit = e => {
+    e.preventDefault();
+    const n = getName(); if(!n) return;
+    const c = $('cd').value.trim().toUpperCase();
+    if(!/^[A-Z0-9]{5}$/.test(c)){ $('cd').focus(); toast('방 코드 5자리를 적어 주세요.'); return; }
+    enter(c, n);
+  };
+  if(prefill) $('nm').focus();
+}
+
+// ───── 연결 ─────
+function enter(c, name){
+  code = c; wantOpen = true; retry = 0;
+  if(location.hash.slice(1) !== c) history.replaceState(null, '', '#' + c);
+  connect(name);
+}
+function connect(name){
+  const me = ls.get('whoami-' + code) || {};
+  const url = SITE.workerUrl.replace(/^http/, 'ws') + '/api/room/' + code + '/ws';
+  app.innerHTML = `<p class="lead">방 ${esc(code)}에 들어가는 중…</p>`;
+  let opened = false;
+  ws = new WebSocket(url);
+  ws.onopen = () => {
+    opened = true; retry = 0; $('conn').hidden = true;
+    ws.send(JSON.stringify({t:'join', name: name || me.name || ls.get('whoami-name') || '', pid: me.pid, key: me.key}));
+    clearInterval(pingT); pingT = setInterval(() => { try{ ws.send('{"t":"ping"}'); }catch(e){} }, 25000);
+  };
+  ws.onmessage = ev => {
+    let m; try{ m = JSON.parse(ev.data); }catch(e){ return; }
+    if(m.t === 'joined'){ ls.set('whoami-' + code, {pid: m.pid, key: m.key, name: name || me.name}); return; }
+    if(m.t === 'error'){
+      if(['started','full','no_name','no_room'].includes(m.error) && !S){ wantOpen = false; ws.close(); toast(ERR[m.error]); return home(code); }
+      return toast(ERR[m.error] || '지금은 할 수 없어요.');
+    }
+    if(m.t === 'state'){ const prev = S; S = m; render(prev); }
+  };
+  ws.onclose = ev => {
+    clearInterval(pingT);
+    if(!wantOpen || ev.code === 4000) return;
+    if(!opened && retry === 0 && !S){ wantOpen = false; toast(ERR.no_room); return home(code); }
+    $('conn').hidden = false;
+    setTimeout(() => connect(), Math.min(1000 * 2 ** retry++, 10000));
+  };
+}
+const send = m => { try{ ws.send(JSON.stringify(m)); }catch(e){ toast('연결이 끊겼어요.'); } };
+
+// ───── 화면 그리기 ─────
+const P = pid => (S.players.find(p => p.pid === pid) || {name:'(나간 사람)'});
+const nm = pid => esc(P(pid).name);
+const meP = () => P(S.me);
+const writerOf = pid => { const i = S.order.indexOf(pid), n = S.order.length; return i < 0 ? null : S.order[(i - 1 + n) % n]; };
+
+function render(prev){
+  const keepFocus = document.activeElement && document.activeElement.id;
+  const draft = {}; app.querySelectorAll('input[type=text]').forEach(i => draft[i.id] = i.value);
+  if(S.phase === 'lobby') lobby();
+  else if(S.phase === 'write') writeScreen();
+  else if(S.phase === 'play') play(prev);
+  else endScreen();
+  for(const id in draft){ const el = $(id); if(el && !el.value) el.value = draft[id]; }
+  if(keepFocus && $(keepFocus)) $(keepFocus).focus();
+}
+
+function lobby(){
+  const isHost = meP().host, hostP = S.players.find(p => p.host);
+  const online = S.players.filter(p => p.connected).length;
+  const link = location.origin + location.pathname + '#' + S.code;
+  app.innerHTML = `
+    <span class="eyebrow">대기실 · ${online}/8명</span>
+    <div class="row" style="align-items:center">
+      <div style="flex:1 1 auto"><p class="note">방 코드</p><p class="code">${esc(S.code)}</p></div>
+      <button class="soft" id="copy" style="flex:none">초대 링크 복사</button>
+    </div>
+    <ul class="players">${S.players.map(p => `<li>
+      <span class="nm">${esc(p.name)}${p.pid === S.me ? ' (나)' : ''}</span>
+      ${p.host ? '<span class="badge gold">방장</span>' : ''}${p.connected ? '' : '<span class="badge off">나가 있음</span>'}
+      ${isHost && p.pid !== S.me ? `<button class="link" data-kick="${p.pid}">내보내기</button>` : ''}</li>`).join('')}</ul>
+    ${hostP && !hostP.connected && !isHost ? '<button class="soft" id="claim">방장이 나가 있어요 · 내가 방장 하기</button>' : ''}
+    <div class="card" style="padding:16px;gap:10px">
+      <span class="eyebrow">주제</span>
+      ${S.topic ? `<p class="q">${esc(S.topic)}</p>` : `<p class="lead">${isHost ? '주제를 골라 주세요.' : '방장이 주제를 고르는 중이에요.'}</p>`}
+      ${isHost ? `
+        <div class="chips">${TOPICS.map(t => `<button class="chip" data-topic="${esc(t)}" aria-pressed="${t === S.topic}">${esc(t)}</button>`).join('')}</div>
+        <div class="inline">
+          <input type="text" id="topicIn" maxlength="30" placeholder="직접 입력">
+          <button class="soft" id="topicSet">정하기</button>
+        </div>
+        <button class="gold" id="rand">🎲 랜덤 주제</button>` : ''}
+    </div>
+    ${isHost ? `<button class="primary big" id="start" ${online >= 3 && S.topic ? '' : 'disabled'}>시작하기</button>
+      <p class="note">${online < 3 ? `${3 - online}명 더 모이면 시작할 수 있어요.` : !S.topic ? '주제를 정하면 시작할 수 있어요.' : '시작하면 순서가 섞이고, 각자 옆 사람의 정답을 적어요.'}</p>`
+      : '<p class="note">방장이 시작하면 바로 정답 쓰기로 넘어가요.</p>'}
+    <button class="link" id="leave">방 나가기</button>`;
+  $('copy').onclick = async () => {
+    try{ await navigator.clipboard.writeText(link); toast('초대 링크를 복사했어요.'); }
+    catch(e){ toast(link); }
+  };
+  app.querySelectorAll('[data-kick]').forEach(b => b.onclick = () => send({t:'kick', pid: b.dataset.kick}));
+  if($('claim')) $('claim').onclick = () => send({t:'claimHost'});
+  app.querySelectorAll('[data-topic]').forEach(b => b.onclick = () => send({t:'topic', topic: b.dataset.topic}));
+  if($('topicSet')) $('topicSet').onclick = () => { const v = $('topicIn').value.trim(); if(v){ send({t:'topic', topic: v}); $('topicIn').value = ''; } };
+  if($('rand')) $('rand').onclick = () => { let t; do{ t = RANDOM_TOPICS[Math.floor(Math.random() * RANDOM_TOPICS.length)]; }while(t === S.topic); send({t:'topic', topic: t}); };
+  if($('start')) $('start').onclick = () => { track('whoami_start', {players: online}); send({t:'start'}); };
+  $('leave').onclick = () => { send({t:'leave'}); wantOpen = false; try{ ws.close(); }catch(e){} history.replaceState(null, '', location.pathname); home(); };
+}
+
+function writeScreen(){
+  const target = S.myTarget, done = S.written.includes(S.me);
+  app.innerHTML = `
+    <span class="eyebrow">정답 쓰기 · 주제: ${esc(S.topic)}</span>
+    <h2 class="q"><b>${nm(target)}</b>님이 맞힐 정답을 몰래 적어 주세요.</h2>
+    <p class="lead">${nm(target)}님만 이 답을 못 봐요. 다른 사람들은 다 볼 수 있어요. 질문을 받으면 내가 예/아니요로 대답해요.</p>
+    ${done ? `<p class="banner">적었어요${myWritten ? `: <b>${esc(myWritten)}</b>` : ''}. 다른 사람을 기다리는 중…</p>` : `
+    <form id="wf">
+      <input type="text" id="secretIn" maxlength="30" placeholder="주제에 맞는 것으로" autocomplete="off">
+      <button class="primary big" type="submit">이걸로 정하기</button>
+    </form>`}
+    <ul class="players">${S.order.map(p => `<li><span class="nm">${nm(p)}${p === S.me ? ' (나)' : ''}</span>${S.written.includes(p) ? '<span class="badge gold">작성 완료</span>' : '<span class="badge">쓰는 중</span>'}</li>`).join('')}</ul>`;
+  if($('wf')) $('wf').onsubmit = e => { e.preventDefault(); const v = $('secretIn').value.trim(); if(!v) return $('secretIn').focus(); myWritten = v; send({t:'write', text: v}); };
+}
+
+function statusOf(pid){
+  if(S.solved[pid]) return `<span class="badge gold">${S.solved[pid].rank}등</span>`;
+  if(S.out[pid]) return '<span class="badge">탈락</span>';
+  if(S.turn === pid) return '<span class="badge gold">차례</span>';
+  return P(pid).connected ? '' : '<span class="badge off">나가 있음</span>';
+}
+
+function play(prev){
+  const me = S.me, myTurn = S.turn === me, pend = S.pending;
+  if(!sel || !S.order.includes(sel) || (prev && prev.turn !== S.turn)) sel = S.turn || me;
+  const asker = S.turn, writer = writerOf(asker);
+  const openVotes = [];
+  for(const pid of S.order) for(const e of S.logs[pid] || []) if(e.vote && e.vote.open) openVotes.push(e);
+  const iCanVote = e => e.asker !== me && e.writer !== me;
+  const myOpen = openVotes.filter(e => iCanVote(e) && !e.vote.votes[me]);
+
+  let action = '';
+  if(pend && S.canRespond){
+    const sec = S.secrets[asker] || {};
+    action = `<div class="pending">
+      <span class="eyebrow">${nm(asker)}님의 ${pend.kind === 'q' ? '질문' : '정답 외치기'}${writer !== me ? ' · 정답 쓴 사람이 나가 있어서 대신 대답해 주세요' : ''}</span>
+      <p class="q">${esc(pend.text)}</p>
+      <p class="note">${nm(asker)}님의 정답: <b>${esc(sec.text || '')}</b></p>
+      <div class="row">${pend.kind === 'q'
+        ? '<button class="yes big" data-ans="yes">예</button><button class="no big" data-ans="no">아니요</button><button class="soft" data-ans="unsure" style="flex:0 1 110px">애매해요</button>'
+        : '<button class="yes big" data-ans="correct">정답!</button><button class="no big" data-ans="wrong">땡</button>'}</div></div>`;
+  } else if(myTurn && !pend){
+    const left = S.maxQ - (S.used[me] || 0);
+    action = `<div class="pending">
+      <span class="eyebrow">내 차례 · 남은 고개 ${left}</span>
+      <form id="af">
+        <input type="text" id="askIn" maxlength="60" placeholder="예: 저는 사람인가요?" autocomplete="off">
+        <div class="row">
+          <button class="primary big" type="submit">질문하기</button>
+          <button class="gold big" type="button" id="guessBtn">정답 외치기</button>
+        </div>
+      </form>
+      <button class="link" id="giveup">포기하기</button></div>`;
+  } else if(myTurn && pend){
+    action = `<p class="banner">${nm(writer)}님이 대답하는 중… <b>${esc(pend.text)}</b></p>`;
+  } else if(asker){
+    action = `<p class="banner">${pend ? `${nm(asker)}님이 물었어요: <b>${esc(pend.text)}</b> · ${nm(writer)}님 대답 기다리는 중` : `${nm(asker)}님이 질문을 고르는 중…`}</p>`;
+  }
+
+  const selLog = S.logs[sel] || [];
+  app.innerHTML = `
+    <div class="row" style="align-items:baseline">
+      <span class="eyebrow" style="flex:1 1 auto">주제: ${esc(S.topic)} · 방 ${esc(S.code)}</span>
+      ${meP().host ? '<button class="link" id="skip">차례 넘기기</button>' : ''}
+    </div>
+    ${myOpen.length ? `<p class="banner">⚖️ 심판할 이의 제기가 ${myOpen.length}건 있어요. 아래 기록에서 투표해 주세요.</p>` : ''}
+    ${action}
+    <div class="grid">${S.order.map(pid => {
+      const sec = S.secrets[pid] || {}, used = S.used[pid] || 0;
+      return `<button class="pc ${S.turn === pid ? 'turn' : ''} ${sel === pid ? 'sel' : ''}" data-sel="${pid}">
+        <span class="who"><b>${nm(pid)}${pid === me ? ' (나)' : ''}</b>${statusOf(pid)}</span>
+        <span class="tag ${sec.hidden ? 'hidden' : ''}">${sec.hidden ? '???' : esc(sec.text)}</span>
+        <span class="meter" aria-label="${used}/${S.maxQ} 고개"><span style="width:${Math.min(100, used / S.maxQ * 100)}%"></span></span>
+        <span class="note">${used}/${S.maxQ} 고개 · 쓴 사람 ${nm(writerOf(pid))}</span></button>`;
+    }).join('')}</div>
+    <div>
+      <span class="eyebrow">${nm(sel)}님의 질문 기록</span>
+      ${selLog.length ? `<ol class="log">${selLog.slice().reverse().map(e => logItem(e)).join('')}</ol>` : '<p class="note" style="margin-top:6px">아직 질문이 없어요.</p>'}
+    </div>`;
+
+  app.querySelectorAll('[data-sel]').forEach(b => b.onclick = () => { sel = b.dataset.sel; play(); });
+  app.querySelectorAll('[data-ans]').forEach(b => b.onclick = () => send({t:'answer', ans: b.dataset.ans}));
+  app.querySelectorAll('[data-dispute]').forEach(b => b.onclick = () => send({t:'dispute', id: Number(b.dataset.dispute)}));
+  app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => { const [id, v] = b.dataset.vote.split(':'); send({t:'vote', id: Number(id), v}); });
+  app.querySelectorAll('[data-close]').forEach(b => b.onclick = () => send({t:'closeVote', id: Number(b.dataset.close)}));
+  if($('skip')) $('skip').onclick = () => send({t:'skip'});
+  if($('af')){
+    $('af').onsubmit = e => { e.preventDefault(); const v = $('askIn').value.trim(); if(!v) return $('askIn').focus(); send({t:'ask', text: v}); };
+    $('guessBtn').onclick = () => { const v = $('askIn').value.trim(); if(!v){ $('askIn').focus(); return toast('정답이라고 생각하는 걸 적고 눌러 주세요.'); } send({t:'guess', text: v}); };
+    $('giveup').onclick = () => { if($('giveup').dataset.sure){ send({t:'giveup'}); } else { $('giveup').dataset.sure = '1'; $('giveup').textContent = '정말 포기할래요 (한 번 더 누르기)'; } };
+  }
+}
+
+function logItem(e){
+  const me = S.me;
+  const canDispute = !e.vote && e.asker !== me && e.writer !== me;
+  let v = '';
+  if(e.vote){
+    const votes = Object.values(e.vote.votes), wrong = votes.filter(x => x === 'wrong').length;
+    if(e.vote.open){
+      const mine = e.vote.votes[me], canVote = e.asker !== me && e.writer !== me;
+      v = `<div class="vote">⚖️ ${nm(e.vote.by)}님의 이의 제기 · 틀렸다 ${wrong} / 맞다 ${votes.length - wrong}
+        ${canVote ? (mine ? `<span>내 투표: ${mine === 'wrong' ? '틀렸다' : '맞다'}</span>` :
+          `<button class="soft" data-vote="${e.id}:right">대답 맞아요</button><button class="soft" data-vote="${e.id}:wrong">대답 틀렸어요</button>`) : '<span>다른 사람들이 심판 중</span>'}
+        ${meP().host ? `<button class="link" data-close="${e.id}">투표 마감</button>` : ''}</div>`;
+    } else {
+      v = `<div class="vote">⚖️ 심판 결과: ${e.vote.result === 'overturned' ? '<b>대답이 뒤집혔어요</b>' : '원래 대답 유지'} (틀렸다 ${wrong} / 맞다 ${votes.length - wrong})</div>`;
+    }
+  }
+  return `<li>
+    <div class="l1"><span class="n">${e.n}</span><span class="qt">${e.kind === 'g' ? '🎯 ' : ''}${esc(e.text)}</span>
+      <span class="ans ${e.ans}">${ANS[e.ans]}</span></div>
+    <div class="l1"><span class="note">대답: ${nm(e.by)}${e.by !== e.writer ? ' (대신)' : ''}</span>
+      ${canDispute ? `<button class="link" data-dispute="${e.id}">이의 있음</button>` : ''}</div>
+    ${v}</li>`;
+}
+
+function endScreen(){
+  const ranked = S.order.slice().sort((a, b) => {
+    const ra = S.solved[a] ? S.solved[a].rank : 99, rb = S.solved[b] ? S.solved[b].rank : 99;
+    return ra - rb || (S.used[a] || 0) - (S.used[b] || 0);
+  });
+  if(!S._tracked){ track('whoami_end', {players: S.order.length}); S._tracked = true; }
+  app.innerHTML = `
+    <span class="eyebrow">게임 끝 · 주제: ${esc(S.topic)}</span>
+    <h2 class="q">${S.solved[S.me] ? `${S.solved[S.me].rank}등! 내 정답은 <b>${esc((S.secrets[S.me] || {}).text)}</b>였어요.` : `내 정답은 <b>${esc((S.secrets[S.me] || {}).text)}</b>였어요.`}</h2>
+    <ol class="rank">${ranked.map(pid => {
+      const s = S.secrets[pid] || {};
+      return `<li><span class="r">${S.solved[pid] ? S.solved[pid].rank : '–'}</span>
+        <span><b>${nm(pid)}</b> · ${S.solved[pid] ? `${S.solved[pid].used}고개 만에 맞힘` : '못 맞힘'}</span>
+        <span class="note">정답 <b>${esc(s.text)}</b> · ${nm(s.by)}님이 씀</span></li>`;
+    }).join('')}</ol>
+    ${meP().host ? '<button class="primary big" id="again">같은 멤버로 한 판 더</button>' : '<p class="note">방장이 새 판을 열면 대기실로 돌아가요.</p>'}
+    <button class="link" id="out">방 나가기</button>`;
+  if($('again')) $('again').onclick = () => send({t:'again'});
+  $('out').onclick = () => { wantOpen = false; try{ ws.close(); }catch(e){} history.replaceState(null, '', location.pathname); home(); };
+}
+
+// 시작
+const h = location.hash.slice(1).toUpperCase();
+if(/^[A-Z0-9]{5}$/.test(h) && ls.get('whoami-' + h)) enter(h);
+else home(/^[A-Z0-9]{5}$/.test(h) ? h : '');
+window.addEventListener('hashchange', () => { const c = location.hash.slice(1).toUpperCase(); if(/^[A-Z0-9]{5}$/.test(c) && c !== code) home(c); });
+})();
+</script>

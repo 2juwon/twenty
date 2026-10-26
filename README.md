@@ -15,7 +15,9 @@
 | `src/claude_prompt.js` | Claude 추리 모드 프롬프트 (페이지와 서버가 같이 씀) |
 | `site.json` | 중계 서버 주소(`workerUrl`), 구글 애널리틱스 측정 ID(`gaId`) |
 | `worker/` | Claude 추리 중계 서버 (Cloudflare Workers) — [배포 방법](worker/README.md) |
-| `build.py` | 위 파일을 합쳐 `index.html`을 만든다 |
+| `src/whoami.html` | 후엠아이 온라인 페이지 → 빌드하면 `whoami/index.html` |
+| `worker/src/whoami_game.js`, `worker/src/room.js` | 후엠아이 방 규칙과 실시간 방 서버 |
+| `build.py` | 위 파일을 합쳐 `index.html`, `whoami/index.html`을 만든다 |
 
 `index.html`은 빌드 결과물이라 직접 고치지 말고 `src/`를 고친 뒤 `python3 build.py`를 실행한다.
 
@@ -47,3 +49,15 @@
 ## 접속 통계
 
 `site.json`의 `gaId`에 구글 애널리틱스 측정 ID(`G-...`)를 넣고 빌드하면 GitHub Pages 버전에 GA가 붙어요. 보내는 이벤트는 `game_start`와 `game_end`예요. 주제·모드·결과·질문 수를 같이 보내요.
+
+## 후엠아이 온라인 (`/whoami/`)
+
+3~8명이 방 코드로 모여서 하는 온라인 후엠아이. AI를 쓰지 않아 API 비용이 없다.
+
+1. 방장이 주제를 고른다 (추천 주제 / 직접 입력 / 랜덤 주제).
+2. 시작하면 순서가 섞이고, 각자 다음 사람이 맞힐 정답을 몰래 적는다. 내 정답만 나에게 `???`로 보인다.
+3. 차례대로 예/아니요 질문을 하거나 정답을 외친다. 대답은 그 정답을 쓴 사람이 한다 (그 사람이 나가 있으면 다른 사람이 대신).
+4. 모든 질문과 대답은 기록으로 남고, 대답이 이상하면 질문자·정답 쓴 사람을 뺀 나머지가 투표로 심판한다 (과반이면 뒤집힘).
+5. 한 사람당 20고개(질문+정답 외치기). 모두 맞히거나 고개를 다 쓰면 끝나고 순위와 정답이 공개된다.
+
+방은 Cloudflare Durable Object 하나씩이고 WebSocket으로 실시간 동기화한다. 6시간 동안 아무 일이 없으면 방이 정리된다. 기기당 하루 방 만들기는 30개(`DAILY_ROOMS_PER_DEVICE`).

@@ -103,6 +103,7 @@ function intro(){
     ${isC ? '<div class="granny"><span class="face" aria-hidden="true">👵</span><p class="bubble">스무고개로 이 할미를 이긴 사람은 여태 없었어야~ 어디 한번 덤벼 봐.</p></div>' : `<p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 헷갈리면 '아마도'나 '모르겠어요'를 눌러도 괜찮아요.</p>`}
     <div class="chips">${T.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
     <button class="primary big" id="start">생각했어요, 시작!</button>
+    ${SITE.workerUrl ? '<a class="friends" href="whoami/">👥 친구들과 온라인 후엠아이 하기 <span aria-hidden="true">→</span></a>' : ''}
     <p class="note">${note}${isC && devToken ? ' · <b>테스트 모드</b> (하루 제한·통계에서 빠짐)' : ''}</p>`);
   card.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if(b.dataset.t !== theme){ setTheme(b.dataset.t); intro(); } });
   card.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { if(b.dataset.m !== mode){ setMode(b.dataset.m); intro(); } });
