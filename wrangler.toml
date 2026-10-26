@@ -1,12 +1,13 @@
+# Cloudflare Workers 설정 (Claude 추리 중계 서버). 저장소 루트에 있어야 Cloudflare Git 연동이 이 서버를 배포해요.
 name = "twenty-claude"
-main = "src/index.js"
+main = "worker/src/index.js"
 compatibility_date = "2025-04-01"
 
 [vars]
 ALLOWED_ORIGINS = "https://2juwon.github.io"
 DAILY_GAMES = "100"            # 하루 전체 Claude 추리 판 수
 DAILY_GAMES_PER_DEVICE = "10"  # 기기(IP)당 하루 판 수
-MODEL = "claude-haiku-5-5"
+MODEL = "claude-haiku-5-5,claude-haiku-4-5"   # 앞에서부터 시도
 
 [[durable_objects.bindings]]
 name = "LIMITER"

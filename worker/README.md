@@ -9,7 +9,7 @@ Anthropic API 키는 이 서버의 비밀값에만 저장되고, 페이지에는
 - `POST /api/result`: 끝난 판의 결과(못 맞힌 정답 포함)를 저장해요.
 - `GET /api/stats?token=...`: 오늘 판 수, API 호출 수, 예상 비용, 못 맞힌 정답 목록을 보여 줘요.
 
-## 제한 (wrangler.toml의 `[vars]`에서 바꿀 수 있어요)
+## 제한 (저장소 루트 `wrangler.toml`의 `[vars]`에서 바꿀 수 있어요)
 
 | 항목 | 값 |
 | --- | --- |
@@ -17,11 +17,15 @@ Anthropic API 키는 이 서버의 비밀값에만 저장되고, 페이지에는
 | 기기(IP)당 하루 판 수 `DAILY_GAMES_PER_DEVICE` | 10 |
 | 판당 API 호출 | 최대 30번 |
 | 허용 주소 `ALLOWED_ORIGINS` | https://2juwon.github.io |
-| 모델 `MODEL` | claude-haiku-5-5 |
+| 모델 `MODEL` | claude-haiku-5-5 (없으면 claude-haiku-4-5) |
 
 날짜는 한국 시간 기준으로 바뀌어요.
 
-## 처음 배포하기
+## Cloudflare Git 연동으로 배포 (권장)
+
+Cloudflare 대시보드에서 이 저장소를 연결하면 `main`에 푸시할 때마다 자동으로 배포돼요. 설정 파일 `wrangler.toml`이 **저장소 루트**에 있으니 루트 디렉터리는 비워 두면(`/`) 돼요. 비밀값 `ANTHROPIC_API_KEY`, `STATS_TOKEN`은 Worker의 설정 → 변수 및 비밀에 넣어요.
+
+## 명령어로 배포
 
 1. **Anthropic 콘솔** (console.anthropic.com)
    - API 키를 만들어요.
@@ -36,7 +40,7 @@ Anthropic API 키는 이 서버의 비밀값에만 저장되고, 페이지에는
    npx wrangler login                          # 브라우저에서 Cloudflare 로그인
    npx wrangler secret put ANTHROPIC_API_KEY   # API 키 붙여넣기 (채팅에 올리지 말 것)
    npx wrangler secret put STATS_TOKEN         # 통계 페이지용 아무 비밀번호
-   npx wrangler deploy
+   npm run deploy                              # = wrangler deploy --config ../wrangler.toml
    ```
 
 4. 배포가 끝나면 `https://twenty-claude.<계정이름>.workers.dev` 같은 주소가 나와요. 저장소 루트의 `site.json`에 있는 `workerUrl`에 그 주소를 넣고, `python3 build.py`를 실행한 다음 커밋해요.

@@ -264,7 +264,7 @@ async function claudeTurn(){
   }catch(e){ throw {code:'network'}; }
   const j = await res.json().catch(() => ({}));
   if(j.gameId) cGame = j.gameId;
-  if(!res.ok) throw {code: j.error || 'upstream', status: j.status || res.status};
+  if(!res.ok) throw {code: j.error || 'upstream', status: j.status || res.status, detail: j.detail};
   const r = checkReply(j); if(!r) throw {code:'bad_reply'}; return r;
 }
 
@@ -278,13 +278,13 @@ async function cNext(){
     <p class="note">보통 몇 초 걸려요.</p>`);
   const tok = ++cTok; let r;
   try{ r = await claudeTurn(); }
-  catch(e){ if(tok !== cTok) return; return cError(e && e.code, e && e.status); }
+  catch(e){ if(tok !== cTok) return; return cError(e && e.code, e && e.status, e && e.detail); }
   if(tok !== cTok || phase !== 'think') return;   // 그사이 처음으로 돌아갔으면 무시
   if(r.type === 'guess' || cQn() >= CLAUDE_LIMIT + 2) return cGuess(r.type === 'guess' ? r.name : null);
   cAsk(r.question);
 }
 
-function cError(code, status){
+function cError(code, status, detail){
   if(code === 'cancelled') return;
   phase = 'end';
   const fatal = code in ERR && code !== 'rate_limited';
@@ -296,7 +296,7 @@ function cError(code, status){
       <button class="big" id="basic">기본 모드로</button>
     </div>
     <button class="link" id="home">처음으로</button>
-    <p class="note">오류 코드: ${esc(code || 'unknown')}${status ? ' ' + esc(status) : ''}</p>`);
+    <p class="note">오류 코드: ${esc(code || 'unknown')}${status ? ' ' + esc(status) : ''}${detail ? ' · ' + esc(detail) : ''}</p>`);
   if($('retry')) $('retry').onclick = cNext;
   $('basic').onclick = () => { setMode('basic'); intro(); };
   $('home').onclick = intro;

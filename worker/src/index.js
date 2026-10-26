@@ -56,15 +56,23 @@ export default {
     gameId = gate.gameId || gameId;
 
     const prompt = buildPrompt(theme, history);
-    const res = await fetch((env.ANTHROPIC_URL || 'https://api.anthropic.com') + '/v1/messages', {
-      method: 'POST',
-      headers: {'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'},
-      body: JSON.stringify({model: env.MODEL || 'claude-haiku-5-5', max_tokens: 300, messages: [{role: 'user', content: prompt}]}),
-    });
-    if(!res.ok){
-      console.log('anthropic error', res.status, (await res.text()).slice(0, 300));
-      return json({error: 'upstream', status: res.status, gameId}, 502);
+    // 모델을 순서대로 시도 (없는 모델이면 다음 것으로)
+    const models = (env.MODEL || 'claude-haiku-5-5').split(',').map(m => m.trim()).filter(Boolean);
+    const headers = {'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'};
+    if(env.ANTHROPIC_WORKSPACE_ID) headers['anthropic-workspace-id'] = env.ANTHROPIC_WORKSPACE_ID;
+    let res, detail = '';
+    for(const model of models){
+      res = await fetch((env.ANTHROPIC_URL || 'https://api.anthropic.com') + '/v1/messages', {
+        method: 'POST', headers,
+        body: JSON.stringify({model, max_tokens: 300, messages: [{role: 'user', content: prompt}]}),
+      });
+      if(res.ok) break;
+      const errText = await res.text();
+      try{ detail = JSON.parse(errText).error.message || ''; }catch(e){ detail = errText; }
+      console.log('anthropic error', model, res.status, errText.slice(0, 300));
+      if(res.status !== 404) break;
     }
+    if(!res.ok) return json({error: 'upstream', status: res.status, detail: String(detail).slice(0, 160), gameId}, 502);
     const data = await res.json();
     const text = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
     const reply = parseReply(text);
