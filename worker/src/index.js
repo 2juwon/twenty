@@ -5,7 +5,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESSES } from '../../src/claude_prompt.js';
 
-const VERSION = '2026-10-26c';   // 배포 확인용
+const VERSION = '2026-10-26d';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {
@@ -66,15 +66,18 @@ export default {
     async function ask(prompt){
       let res, detail = '';
       for(const model of models){
-        res = await fetch((env.ANTHROPIC_URL || 'https://api.anthropic.com') + '/v1/messages', {
-          method: 'POST', headers,
-          body: JSON.stringify({model, max_tokens: 600, messages: [{role: 'user', content: prompt}]}),
-        });
-        if(res.ok) break;
-        const errText = await res.text();
-        try{ detail = JSON.parse(errText).error.message || ''; }catch(e){ detail = errText; }
-        console.log('anthropic error', model, res.status, errText.slice(0, 300));
-        if(res.status !== 404) break;
+        // 생각(thinking)을 끄고 짧게 답하게 한다. 모델이 그 설정을 거부하면 설정 없이 다시 시도
+        for(const noThink of [true, false]){
+          const req = {model, max_tokens: 1500, messages: [{role: 'user', content: prompt}]};
+          if(noThink) req.thinking = {type: 'disabled'};
+          res = await fetch((env.ANTHROPIC_URL || 'https://api.anthropic.com') + '/v1/messages', {method: 'POST', headers, body: JSON.stringify(req)});
+          if(res.ok) break;
+          const errText = await res.text();
+          try{ detail = JSON.parse(errText).error.message || ''; }catch(e){ detail = errText; }
+          console.log('anthropic error', model, noThink ? 'noThink' : '', res.status, errText.slice(0, 300));
+          if(!(noThink && res.status === 400 && /think/i.test(detail))) break;
+        }
+        if(res.ok || res.status !== 404) break;
       }
       if(!res.ok) return {err: () => json({error: 'upstream', status: res.status, detail: String(detail).slice(0, 160), gameId}, 502)};
       const data = await res.json();
