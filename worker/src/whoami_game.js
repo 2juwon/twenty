@@ -1,6 +1,6 @@
 // 후엠아이 온라인 — 게임 규칙 (서버가 유일한 판정자, DOM/네트워크 없음)
-export const MIN_PLAYERS = 3, MAX_PLAYERS = 8, MAX_Q = 20;
-const LEN = {name: 12, topic: 30, secret: 30, q: 60};
+export const MIN_PLAYERS = 3, MAX_PLAYERS = 8, MAX_Q = 20, OPEN_EVERY = 5;
+const LEN = {name: 12, topic: 30, secret: 30, q: 60, reply: 40};
 
 export function newState(code){
   return {code, phase: 'lobby', players: [], topic: '', order: [], secrets: {}, logs: {}, used: {},
@@ -22,6 +22,14 @@ export function targetOf(st, pid){
   return i < 0 ? null : st.order[(i + 1) % n];
 }
 const active = (st, pid) => !st.solved[pid] && !st.out[pid];
+// 자유 질문 찬스: 5고개를 쓸 때마다 1번 생기고, 아무 때나 쓸 수 있다
+export function openChances(st, pid){ return Math.floor((st.used[pid] || 0) / OPEN_EVERY) - ((st.openUsed || {})[pid] || 0); }
+// 자유 질문 대답에 정답 단어를 그대로 쓰면 안 된다
+export function revealsAnswer(reply, secret){
+  const n = x => String(x).replace(/[\s.,!?~'"·-]/g, '').toLowerCase();
+  const r = n(reply), a = n(secret);
+  return a.length >= 2 ? r.includes(a) : r === a;
+}
 
 function nextTurn(st){
   st.pending = null;
@@ -75,6 +83,8 @@ function resolveVote(st, e){
   if(e.vote.result !== 'overturned') return;
   if(e.kind === 'q'){
     e.ans = e.ans === 'yes' ? 'no' : e.ans === 'no' ? 'yes' : 'unsure';
+  } else if(e.kind === 'o'){
+    e.ans = 'voided';   // 엉터리 대답으로 판정 → 무효 표시
   } else {
     e.ans = e.ans === 'correct' ? 'wrong' : 'correct';
     if(e.ans === 'correct'){ markSolved(st, e.asker); if(st.turn === e.asker) nextTurn(st); }
@@ -126,7 +136,7 @@ export function apply(st, pid, m){
       st.players = st.players.filter(p => p.connected);
       const ids = st.players.map(p => p.pid);
       for(let i = ids.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
-      Object.assign(st, {phase: 'write', order: ids, secrets: {}, logs: {}, used: {}, solved: {}, out: {}, turn: null, pending: null});
+      Object.assign(st, {phase: 'write', order: ids, secrets: {}, logs: {}, used: {}, openUsed: {}, solved: {}, out: {}, turn: null, pending: null});
       ids.forEach(p => st.logs[p] = []);
       return;
     }
@@ -140,15 +150,26 @@ export function apply(st, pid, m){
     case 'ask': case 'guess': {
       if(st.phase !== 'play' || st.turn !== pid || st.pending) return 'not_allowed';
       const text = clean(m.text, LEN.q); if(!text) return 'empty';
-      st.pending = {kind: m.t === 'ask' ? 'q' : 'g', text, at: Date.now()};
+      const open = m.t === 'ask' && !!m.open;
+      if(open && openChances(st, pid) <= 0) return 'no_chance';
+      st.pending = {kind: open ? 'o' : m.t === 'ask' ? 'q' : 'g', text, at: Date.now()};
       return;
     }
     case 'answer': {
       if(st.phase !== 'play' || !canRespond(st, pid)) return 'not_allowed';
       const p = st.pending, asker = st.turn;
-      const ok = p.kind === 'q' ? ['yes', 'no', 'unsure'] : ['correct', 'wrong'];
-      if(!ok.includes(m.ans)) return 'bad_answer';
-      st.logs[asker].push({id: st.nextLogId++, kind: p.kind, text: p.text, ans: m.ans, asker, writer: writerOf(st, asker), by: pid, n: (st.used[asker] || 0) + 1, vote: null});
+      let reply = '';
+      if(p.kind === 'o'){
+        reply = clean(m.reply, LEN.reply);
+        if(!reply) return 'empty';
+        if(revealsAnswer(reply, (st.secrets[asker] || {}).text || '')) return 'contains_answer';
+        m.ans = 'open';
+        st.openUsed = st.openUsed || {}; st.openUsed[asker] = (st.openUsed[asker] || 0) + 1;
+      } else {
+        const ok = p.kind === 'q' ? ['yes', 'no', 'unsure'] : ['correct', 'wrong'];
+        if(!ok.includes(m.ans)) return 'bad_answer';
+      }
+      st.logs[asker].push({id: st.nextLogId++, kind: p.kind, text: p.text, ans: m.ans, reply, asker, writer: writerOf(st, asker), by: pid, n: (st.used[asker] || 0) + 1, vote: null});
       useQuestion(st, asker);
       if(p.kind === 'g' && m.ans === 'correct') markSolved(st, asker);
       nextTurn(st);
@@ -231,7 +252,7 @@ export function view(st, pid){
     order: st.order, written: st.phase === 'write' ? Object.values(st.secrets).map(s => s.by) : [],
     myTarget: st.order.length ? targetOf(st, pid) : null,
     secrets: st.phase === 'write' ? {} : secrets,
-    logs: st.logs, used: st.used, solved: st.solved, out: st.out, turn: st.turn,
+    logs: st.logs, used: st.used, openUsed: st.openUsed || {}, openEvery: OPEN_EVERY, solved: st.solved, out: st.out, turn: st.turn,
     pending: st.pending, canRespond: canRespond(st, pid),
   };
 }

@@ -7,7 +7,7 @@ import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESS
 export { Room } from './room.js';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-const VERSION = '2026-10-27b';   // 배포 확인용
+const VERSION = '2026-10-27c';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {

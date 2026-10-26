@@ -85,6 +85,9 @@ form{display:flex;flex-direction:column;gap:10px}
 .log .qt{flex:1;min-width:0;overflow-wrap:anywhere}
 .ans{font-weight:700;white-space:nowrap}
 .ans.yes,.ans.correct{color:var(--yes)} .ans.no,.ans.wrong{color:var(--no)} .ans.unsure{color:var(--muted)}
+.ans.open{color:var(--ink);white-space:normal;background:var(--tag);border-radius:8px;padding:2px 8px;font-weight:400}
+.ans.voided{color:var(--muted);text-decoration:line-through}
+.chance{color:var(--accent);font-weight:700}
 .ans.yes,.ans.no{background:none;border:none}
 .vote{display:flex;gap:8px;align-items:center;flex-wrap:wrap;font-size:.88rem;color:var(--muted)}
 .banner{background:var(--tag);border-radius:12px;padding:10px 14px;font-size:.92rem}
@@ -116,8 +119,10 @@ const ERR = {
   started:'이미 시작한 방이에요. 끝나고 다시 들어와 주세요.', full:'방이 꽉 찼어요 (최대 8명).', no_name:'닉네임을 적어 주세요.',
   no_room:'없는 방이에요. 방 코드를 확인해 주세요.', no_topic:'주제를 먼저 정해 주세요.', not_enough:'3명 이상 모여야 시작할 수 있어요.',
   room_limit:'오늘은 이 기기에서 방을 너무 많이 만들었어요. 내일 다시 해 주세요.', empty:'내용을 적어 주세요.', not_allowed:'지금은 할 수 없어요.',
+  contains_answer:'정답 단어를 그대로 쓰면 안 돼요. 힌트처럼 돌려서 적어 주세요.', no_chance:'자유 질문 찬스가 아직 없어요.',
 };
-const ANS = {yes:'예', no:'아니요', unsure:'애매해요', correct:'정답!', wrong:'땡'};
+const ANS = {yes:'예', no:'아니요', unsure:'애매해요', correct:'정답!', wrong:'땡', open:'', voided:'무효'};
+const KIND = {q:'질문', g:'정답 외치기', o:'자유 질문'};
 
 const app = document.getElementById('app');
 const $ = id => document.getElementById(id);
@@ -141,7 +146,7 @@ function home(prefill){
   app.innerHTML = `
     <span class="eyebrow">온라인 후엠아이 · 3~8명</span>
     <h2 class="q">내 이마에 붙은 정답은 나만 몰라요.</h2>
-    <p class="lead">방장이 주제를 정하면 각자 옆 사람의 정답을 몰래 적어요. 예/아니요 질문으로 스무 고개 안에 내 정답을 맞혀 보세요.</p>
+    <p class="lead">방장이 주제를 정하면 각자 옆 사람의 정답을 몰래 적어요. 예/아니요 질문으로 스무 고개 안에 내 정답을 맞혀 보세요. 5고개마다 단답이 아닌 💬 자유 질문 찬스가 생겨요.</p>
     <form id="f">
       <label class="note" for="nm">닉네임</label>
       <input type="text" id="nm" maxlength="12" value="${esc(name)}" placeholder="예: 주원" autocomplete="nickname">
@@ -305,32 +310,46 @@ function play(prev){
   const iCanVote = e => e.asker !== me && e.writer !== me;
   const myOpen = openVotes.filter(e => iCanVote(e) && !e.vote.votes[me]);
 
+  const every = S.openEvery || 5;
+  const chances = pid => Math.floor((S.used[pid] || 0) / every) - ((S.openUsed || {})[pid] || 0);
   let action = '';
-  if(pend && S.canRespond){
+  if(pend && S.canRespond && pend.kind === 'o'){
     const sec = S.secrets[asker] || {};
     action = `<div class="pending">
-      <span class="eyebrow">${nm(asker)}님의 ${pend.kind === 'q' ? '질문' : '정답 외치기'}${writer !== me ? ' · 정답 쓴 사람이 나가 있어서 대신 대답해 주세요' : ''}</span>
+      <span class="eyebrow">💬 ${nm(asker)}님의 자유 질문${writer !== me ? ' · 정답 쓴 사람이 나가 있어서 대신 대답해 주세요' : ''}</span>
+      <p class="q">${esc(pend.text)}</p>
+      <p class="note">${nm(asker)}님의 정답: <b>${esc(sec.text || '')}</b> · 정답 단어는 쓰지 말고, 사실대로 짧게 힌트처럼 적어 주세요.</p>
+      <form id="rf" class="inline">
+        <input type="text" id="replyIn" maxlength="40" placeholder="예: 남극에 살아요" autocomplete="off">
+        <button class="primary" type="submit">대답하기</button>
+      </form></div>`;
+  } else if(pend && S.canRespond){
+    const sec = S.secrets[asker] || {};
+    action = `<div class="pending">
+      <span class="eyebrow">${nm(asker)}님의 ${KIND[pend.kind]}${writer !== me ? ' · 정답 쓴 사람이 나가 있어서 대신 대답해 주세요' : ''}</span>
       <p class="q">${esc(pend.text)}</p>
       <p class="note">${nm(asker)}님의 정답: <b>${esc(sec.text || '')}</b></p>
       <div class="row">${pend.kind === 'q'
         ? '<button class="yes big" data-ans="yes">예</button><button class="no big" data-ans="no">아니요</button><button class="soft" data-ans="unsure" style="flex:0 1 110px">애매해요</button>'
         : '<button class="yes big" data-ans="correct">정답!</button><button class="no big" data-ans="wrong">땡</button>'}</div></div>`;
   } else if(myTurn && !pend){
-    const left = S.maxQ - (S.used[me] || 0);
+    const left = S.maxQ - (S.used[me] || 0), ch = chances(me), toNext = every - ((S.used[me] || 0) % every);
     action = `<div class="pending">
-      <span class="eyebrow">내 차례 · 남은 고개 ${left}</span>
+      <span class="eyebrow">내 차례 · 남은 고개 ${left}${ch > 0 ? ` · <span class="chance">💬 자유 질문 찬스 ${ch}</span>` : ''}</span>
       <form id="af">
-        <input type="text" id="askIn" maxlength="60" placeholder="예: 저는 사람인가요?" autocomplete="off">
+        <input type="text" id="askIn" maxlength="60" placeholder="${ch > 0 ? '예: 저의 대표작은 무엇인가요?' : '예: 저는 사람인가요?'}" autocomplete="off">
         <div class="row">
-          <button class="primary big" type="submit">질문하기</button>
+          <button class="primary big" type="submit">예/아니요 질문</button>
           <button class="gold big" type="button" id="guessBtn">정답 외치기</button>
         </div>
+        ${ch > 0 ? '<button class="big" type="button" id="openBtn">💬 자유 질문 하기</button>'
+          : `<p class="note">${toNext}고개 더 쓰면 자유 질문 찬스가 생겨요. (예: 저의 대표작은 무엇인가요?)</p>`}
       </form>
       <button class="link" id="giveup">포기하기</button></div>`;
   } else if(myTurn && pend){
-    action = `<p class="banner">${P(writer).bot ? '🤖 ' : ''}${nm(writer)}님이 ${P(writer).bot ? '생각하는' : '대답하는'} 중… <b>${esc(pend.text)}</b></p>`;
+    action = `<p class="banner">${pend.kind === 'o' ? '💬 ' : ''}${P(writer).bot ? '🤖 ' : ''}${nm(writer)}님이 ${P(writer).bot ? '생각하는' : '대답하는'} 중… <b>${esc(pend.text)}</b></p>`;
   } else if(asker){
-    action = `<p class="banner">${pend ? `${nm(asker)}님이 물었어요: <b>${esc(pend.text)}</b> · ${nm(writer)}님 대답 기다리는 중` : `${P(asker).bot ? '🤖 ' : ''}${nm(asker)}님이 질문을 고르는 중…`}</p>`;
+    action = `<p class="banner">${pend ? `${pend.kind === 'o' ? '💬 자유 질문 · ' : ''}${nm(asker)}님이 물었어요: <b>${esc(pend.text)}</b> · ${nm(writer)}님 대답 기다리는 중` : `${P(asker).bot ? '🤖 ' : ''}${nm(asker)}님이 질문을 고르는 중…`}</p>`;
   }
 
   const selLog = S.logs[sel] || [];
@@ -347,7 +366,7 @@ function play(prev){
         <span class="who"><b>${nm(pid)}${pid === me ? ' (나)' : ''}${P(pid).bot ? ' 🤖' : ''}</b>${statusOf(pid)}</span>
         <span class="tag ${sec.hidden ? 'hidden' : ''}">${sec.hidden ? '???' : esc(sec.text)}</span>
         <span class="meter" aria-label="${used}/${S.maxQ} 고개"><span style="width:${Math.min(100, used / S.maxQ * 100)}%"></span></span>
-        <span class="note">${used}/${S.maxQ} 고개 · 쓴 사람 ${nm(writerOf(pid))}</span></button>`;
+        <span class="note">${used}/${S.maxQ} 고개${chances(pid) > 0 ? ` · <span class="chance">💬${chances(pid)}</span>` : ''} · 쓴 사람 ${nm(writerOf(pid))}</span></button>`;
     }).join('')}</div>
     <div>
       <span class="eyebrow">${nm(sel)}님의 질문 기록</span>
@@ -360,8 +379,10 @@ function play(prev){
   app.querySelectorAll('[data-vote]').forEach(b => b.onclick = () => { const [id, v] = b.dataset.vote.split(':'); send({t:'vote', id: Number(id), v}); });
   app.querySelectorAll('[data-close]').forEach(b => b.onclick = () => send({t:'closeVote', id: Number(b.dataset.close)}));
   if($('skip')) $('skip').onclick = () => send({t:'skip'});
+  if($('rf')) $('rf').onsubmit = e => { e.preventDefault(); const v = $('replyIn').value.trim(); if(!v) return $('replyIn').focus(); send({t:'answer', reply: v}); };
   if($('af')){
     $('af').onsubmit = e => { e.preventDefault(); const v = $('askIn').value.trim(); if(!v) return $('askIn').focus(); send({t:'ask', text: v}); };
+    if($('openBtn')) $('openBtn').onclick = () => { const v = $('askIn').value.trim(); if(!v){ $('askIn').focus(); return toast('자유 질문을 적고 눌러 주세요.'); } send({t:'ask', open: true, text: v}); };
     $('guessBtn').onclick = () => { const v = $('askIn').value.trim(); if(!v){ $('askIn').focus(); return toast('정답이라고 생각하는 걸 적고 눌러 주세요.'); } send({t:'guess', text: v}); };
     $('giveup').onclick = () => { if($('giveup').dataset.sure){ send({t:'giveup'}); } else { $('giveup').dataset.sure = '1'; $('giveup').textContent = '정말 포기할래요 (한 번 더 누르기)'; } };
   }
@@ -384,8 +405,9 @@ function logItem(e){
     }
   }
   return `<li>
-    <div class="l1"><span class="n">${e.n}</span><span class="qt">${e.kind === 'g' ? '🎯 ' : ''}${esc(e.text)}</span>
-      <span class="ans ${e.ans}">${ANS[e.ans]}</span></div>
+    <div class="l1"><span class="n">${e.n}</span><span class="qt">${e.kind === 'g' ? '🎯 ' : e.kind === 'o' ? '💬 ' : ''}${esc(e.text)}</span>
+      ${e.kind === 'o' ? '' : `<span class="ans ${e.ans}">${ANS[e.ans]}</span>`}</div>
+    ${e.kind === 'o' ? `<div class="l1"><span class="n"></span><span class="ans ${e.ans === 'voided' ? 'voided' : 'open'}">${esc(e.reply)}</span>${e.ans === 'voided' ? '<span class="note">무효 판정</span>' : ''}</div>` : ''}
     <div class="l1"><span class="note">대답: ${nm(e.by)}${e.by !== e.writer ? ' (대신)' : ''}</span>
       ${canDispute ? `<button class="link" data-dispute="${e.id}">이의 있음</button>` : ''}</div>
     ${v}</li>`;

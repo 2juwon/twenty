@@ -87,8 +87,8 @@ export class Room extends DurableObject {
         const allowAI = await this.allowAI();
         let msg;
         if(job.kind === 'write') msg = {t: 'write', text: await botWrite(this.env, this.st, job.pid, allowAI)};
-        else if(job.kind === 'answer') msg = {t: 'answer', ans: await botAnswer(this.env, this.st, job.pid, allowAI)};
-        else { const r = await botTurn(this.env, this.st, job.pid, allowAI); msg = {t: r.t, text: r.text}; }
+        else if(job.kind === 'answer') msg = {t: 'answer', ...(await botAnswer(this.env, this.st, job.pid, allowAI))};
+        else { const r = await botTurn(this.env, this.st, job.pid, allowAI); msg = {t: r.t, text: r.text, open: !!r.open}; }
         // 그사이 상황이 바뀌었으면 (누가 차례를 넘김 등) 버리고 다시 판단
         if(JSON.stringify([this.st.phase, this.st.turn, this.st.pending]) !== before && job.kind !== 'write') continue;
         if(!apply(this.st, job.pid, msg)){ await this.save(); this.broadcast(); }
