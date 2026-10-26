@@ -5,6 +5,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESSES } from '../../src/claude_prompt.js';
 
+const VERSION = '2026-10-26b';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {
@@ -76,7 +77,11 @@ export default {
       const data = await res.json();
       const text = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
       const reply = parseReply(text);
-      if(!reply) console.log('bad reply', data.stop_reason, text.slice(0, 400));
+      if(!reply){
+        const kinds = (data.content || []).map(c => c.type).join(',');
+        console.log('bad reply', data.stop_reason, kinds, text.slice(0, 400));
+        await limiter.badReply(`${data.model || ''} stop=${data.stop_reason} content=${kinds}`, text);
+      }
       return {reply};
     }
     let r = await ask(buildPrompt(theme, history));
@@ -103,7 +108,8 @@ export class Limiter extends DurableObject {
     this.sql = ctx.storage.sql;
     this.sql.exec(`CREATE TABLE IF NOT EXISTS games(id TEXT PRIMARY KEY, day TEXT, ip TEXT, turns INTEGER, created INTEGER);
       CREATE TABLE IF NOT EXISTS results(id TEXT, day TEXT, theme TEXT, won INTEGER, name TEXT, questions INTEGER, created INTEGER);
-      CREATE INDEX IF NOT EXISTS games_day ON games(day);`);
+      CREATE INDEX IF NOT EXISTS games_day ON games(day);
+      CREATE TABLE IF NOT EXISTS bad(created INTEGER, info TEXT, text TEXT);`);
   }
   async start(ip, dailyLimit, perDevice){
     const day = today();
@@ -129,12 +135,18 @@ export class Limiter extends DurableObject {
     if(!known || dup) return;
     this.sql.exec('INSERT INTO results VALUES (?, ?, ?, ?, ?, ?, ?)', id, today(), r.theme, r.won ? 1 : 0, r.name, r.questions, Date.now());
   }
+  async badReply(info, text){
+    this.sql.exec('INSERT INTO bad VALUES (?, ?, ?)', Date.now(), String(info).slice(0, 200), String(text).slice(0, 800));
+    this.sql.exec('DELETE FROM bad WHERE created < (SELECT MIN(created) FROM (SELECT created FROM bad ORDER BY created DESC LIMIT 30))');
+  }
   async stats(dailyLimit){
     const day = today();
     const g = this.sql.exec('SELECT COUNT(*) games, COALESCE(SUM(turns),0) calls FROM games WHERE day = ?', day).one();
     const days = this.sql.exec(`SELECT day, COUNT(*) games, SUM(turns) calls FROM games GROUP BY day ORDER BY day DESC LIMIT 14`).toArray();
     const res = this.sql.exec(`SELECT day, theme, SUM(won) won, COUNT(*) played FROM results GROUP BY day, theme ORDER BY day DESC LIMIT 28`).toArray();
     const missed = this.sql.exec(`SELECT theme, name, COUNT(*) times FROM results WHERE won = 0 AND name <> '' GROUP BY theme, name ORDER BY times DESC LIMIT 100`).toArray();
-    return {today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, estCostUSD: +(g.calls * 0.0002).toFixed(3)}, days, results: res, missed};
+    const bad = this.sql.exec('SELECT created, info, text FROM bad ORDER BY created DESC LIMIT 10').toArray()
+      .map(b => ({at: new Date(b.created + 9 * 3600e3).toISOString().slice(0, 19).replace('T', ' '), info: b.info, text: b.text}));
+    return {version: VERSION, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, estCostUSD: +(g.calls * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
   }
 }
