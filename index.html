@@ -547,6 +547,7 @@ document.addEventListener('keydown', e => {
 
 // ───────── 시골 할머니 모드 (AI가 추리) ─────────
 let cHist = [], cGame = '', cQ = null, cEndWrong = 0, cCtl = null, cGuessName = '', cTok = 0, cQuip = '';
+const cCache = new Map();   // 같은 질문·답 흐름이면 AI를 다시 부르지 않고 저장된 답을 쓴다
 const cQn = () => cHist.filter(h => h.t === 'q').length;
 const pick = arr => arr[Math.floor(Math.random() * arr.length)];
 const GRANNY = {
@@ -589,7 +590,7 @@ async function claudeTurn(){
 
 function granny(text){ return text ? `<div class="granny"><span class="face" aria-hidden="true">👵</span><p class="bubble">${esc(text)}</p></div>` : ''; }
 
-function cStart(){ cHist = []; cGame = ''; cEndWrong = 0; cQuip = ''; limit = CLAUDE_LIMIT; cNext(); }
+function cStart(){ cHist = []; cGame = ''; cEndWrong = 0; cQuip = ''; cCache.clear(); limit = CLAUDE_LIMIT; cNext(); }
 
 async function cNext(){
   phase = 'think'; ridge(cQn());
@@ -597,9 +598,12 @@ async function cNext(){
     <span class="eyebrow">${ORD[cQn()] || ''} 번째 고개 · 시골 할머니</span>
     <h2 class="q thinking">${pick(GRANNY.think)}<span class="dots"><i>.</i><i>.</i><i>.</i></span></h2>
     ${granny(cQuip)}`);
-  const tok = ++cTok; let r;
-  try{ r = await claudeTurn(); }
-  catch(e){ if(tok !== cTok) return; return cError(e && e.code, e && e.status, e && e.detail); }
+  const tok = ++cTok, key = JSON.stringify(cHist); let r = cCache.get(key);
+  if(!r){
+    try{ r = await claudeTurn(); }
+    catch(e){ if(tok !== cTok) return; return cError(e && e.code, e && e.status, e && e.detail); }
+    cCache.set(key, r);
+  }
   if(tok !== cTok || phase !== 'think') return;   // 그사이 처음으로 돌아갔으면 무시
   cQuip = r.quip || '';
   if(r.type === 'guess' || cQn() >= CLAUDE_LIMIT + 2) return cGuess(r.type === 'guess' ? r.name : null);
