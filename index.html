@@ -358,7 +358,15 @@ const claudeReady = () => !!sampleFn || !!(SITE.workerUrl && !window.claude);
 if(window.claude && window.claude.use){
   window.claude.use('sample').then(s => { if(s){ sampleFn = s; if(phase === 'intro') intro(); } }).catch(() => {});
 }
-function track(name, params){ try{ if(window.gtag) window.gtag('event', name, Object.assign({theme, mode}, params || {})); }catch(e){} }
+// 주인 테스트 모드: 주소 끝에 ?dev=통계비밀번호 를 붙여 한 번 열면 이 기기에 저장돼 하루 제한에서 빠진다 (?dev=off 로 해제)
+let devToken = '';
+try{
+  const q = new URLSearchParams(location.search).get('dev');
+  if(q === 'off') localStorage.removeItem('seumugogae-dev'); else if(q) localStorage.setItem('seumugogae-dev', q);
+  if(q) history.replaceState(null, '', location.pathname + location.hash);
+  devToken = localStorage.getItem('seumugogae-dev') || '';
+}catch(e){}
+function track(name, params){ if(devToken) return; try{ if(window.gtag) window.gtag('event', name, Object.assign({theme, mode}, params || {})); }catch(e){} }
 const CLAUDE_THEMES = {
   all:{label:'모든 것', chips:['무엇이든','동물','음식','물건','장소','캐릭터'], prompt:'아무거나 하나 떠올려 봐라잉. 이 할미가 다 맞혀 줄 텡께.'},
   celeb:{label:'인물', chips:['연예인','역사 인물','운동선수','캐릭터','유튜버'], prompt:'누구든 한 사람 떠올려 봐. 할미가 사람 보는 눈은 있어야.'}
@@ -413,7 +421,7 @@ function intro(){
     ${isC ? '<div class="granny"><span class="face" aria-hidden="true">👵</span><p class="bubble">스무고개로 이 할미를 이긴 사람은 여태 없었어야~ 어디 한번 덤벼 봐.</p></div>' : `<p class="lead">예, 아니요로 답할 수 있는 질문을 스무 번까지 할게요. 헷갈리면 '아마도'나 '모르겠어요'를 눌러도 괜찮아요.</p>`}
     <div class="chips">${T.chips.map(c => `<span class="chip">${c}</span>`).join('')}</div>
     <button class="primary big" id="start">생각했어요, 시작!</button>
-    <p class="note">${note}</p>`);
+    <p class="note">${note}${isC && devToken ? ' · <b>테스트 모드</b> (하루 제한·통계에서 빠짐)' : ''}</p>`);
   card.querySelectorAll('[data-t]').forEach(b => b.onclick = () => { if(b.dataset.t !== theme){ setTheme(b.dataset.t); intro(); } });
   card.querySelectorAll('[data-m]').forEach(b => b.onclick = () => { if(b.dataset.m !== mode){ setMode(b.dataset.m); intro(); } });
   $('start').onclick = () => { track('game_start'); isC ? cStart() : next(); };
@@ -592,10 +600,10 @@ async function claudeTurn(){
   let res;
   try{
     res = await fetch(SITE.workerUrl + '/api/turn', {method:'POST', headers:{'Content-Type':'application/json'},
-      body: JSON.stringify({theme, history:cHist, gameId:cGame || undefined})});
+      body: JSON.stringify({theme, history:cHist, gameId:cGame || undefined, dev:devToken || undefined})});
   }catch(e){ throw {code:'network'}; }
   const j = await res.json().catch(() => ({}));
-  if(j.gameId) cGame = j.gameId;
+  if('gameId' in j) cGame = j.gameId || '';
   if(!res.ok) throw {code: j.error || 'upstream', status: j.status || res.status, detail: j.detail};
   const r = checkReply(j); if(!r) throw {code:'bad_reply'}; return r;
 }

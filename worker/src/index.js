@@ -5,7 +5,7 @@
 import { DurableObject } from 'cloudflare:workers';
 import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESSES } from '../../src/claude_prompt.js';
 
-const VERSION = '2026-10-26b';   // 배포 확인용
+const VERSION = '2026-10-26c';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {
@@ -49,10 +49,13 @@ export default {
 
     // 판 시작 또는 이어가기 — 제한 확인
     let gameId = typeof body.gameId === 'string' ? body.gameId.slice(0, 40) : '';
+    const isNew = !gameId;
+    // 주인 테스트용: dev 값이 STATS_TOKEN과 같으면 하루 제한에서 빼고 따로 센다
+    const isDev = !!env.STATS_TOKEN && body.dev === env.STATS_TOKEN;
     const ipHash = await sha(req.headers.get('CF-Connecting-IP') || 'unknown', env.STATS_TOKEN || 'salt');
     const gate = gameId
       ? await limiter.turn(gameId, MAX_TURNS)
-      : await limiter.start(ipHash, Number(env.DAILY_GAMES || 100), Number(env.DAILY_GAMES_PER_DEVICE || 10));
+      : await limiter.start(isDev ? 'dev' : ipHash, Number(env.DAILY_GAMES || 100), Number(env.DAILY_GAMES_PER_DEVICE || 10));
     if(!gate.ok) return json({error: gate.reason}, 429);
     gameId = gate.gameId || gameId;
 
@@ -73,7 +76,7 @@ export default {
         console.log('anthropic error', model, res.status, errText.slice(0, 300));
         if(res.status !== 404) break;
       }
-      if(!res.ok) return {err: json({error: 'upstream', status: res.status, detail: String(detail).slice(0, 160), gameId}, 502)};
+      if(!res.ok) return {err: () => json({error: 'upstream', status: res.status, detail: String(detail).slice(0, 160), gameId}, 502)};
       const data = await res.json();
       const text = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
       const reply = parseReply(text);
@@ -85,10 +88,15 @@ export default {
       return {reply};
     }
     let r = await ask(buildPrompt(theme, history));
-    if(r.err) return r.err;
-    if(!r.reply){ r = await ask(buildPrompt(theme, history, true)); if(r.err) return r.err; }
+    if(!r.err && !r.reply) r = await ask(buildPrompt(theme, history, true));
+    if(r.err || !r.reply){
+      // 판의 첫 질문부터 실패하면 판 수에서 빼 준다 (다시 시도하면 새 판으로)
+      if(isNew){ await limiter.cancel(gameId); gameId = ''; }
+      else await limiter.refundTurn(gameId);
+      if(r.err) return r.err();
+      return json({error: 'bad_reply', gameId}, 502);
+    }
     const reply = r.reply;
-    if(!reply) return json({error: 'bad_reply', gameId}, 502);
     return json({gameId, ...reply});
   },
 };
@@ -113,15 +121,17 @@ export class Limiter extends DurableObject {
   }
   async start(ip, dailyLimit, perDevice){
     const day = today();
-    const total = this.sql.exec('SELECT COUNT(*) c FROM games WHERE day = ?', day).one().c;
-    if(total >= dailyLimit) return {ok: false, reason: 'daily_limit'};
+    const total = this.sql.exec("SELECT COUNT(*) c FROM games WHERE day = ? AND ip <> 'dev'", day).one().c;
+    if(ip !== 'dev' && total >= dailyLimit) return {ok: false, reason: 'daily_limit'};
     const mine = this.sql.exec('SELECT COUNT(*) c FROM games WHERE day = ? AND ip = ?', day, ip).one().c;
-    if(mine >= perDevice) return {ok: false, reason: 'device_limit'};
+    if(ip !== 'dev' && mine >= perDevice) return {ok: false, reason: 'device_limit'};
     const id = crypto.randomUUID();
     this.sql.exec('INSERT INTO games VALUES (?, ?, ?, 1, ?)', id, day, ip, Date.now());
     if(Math.random() < 0.05) this.sql.exec('DELETE FROM games WHERE created < ?', Date.now() - 14 * 86400e3);
     return {ok: true, gameId: id};
   }
+  async cancel(id){ this.sql.exec('DELETE FROM games WHERE id = ?', id); }
+  async refundTurn(id){ this.sql.exec('UPDATE games SET turns = MAX(turns - 1, 0) WHERE id = ?', id); }
   async turn(id, maxTurns){
     const row = this.sql.exec('SELECT turns FROM games WHERE id = ?', id).toArray()[0];
     if(!row) return {ok: false, reason: 'unknown_game'};
@@ -141,12 +151,13 @@ export class Limiter extends DurableObject {
   }
   async stats(dailyLimit){
     const day = today();
-    const g = this.sql.exec('SELECT COUNT(*) games, COALESCE(SUM(turns),0) calls FROM games WHERE day = ?', day).one();
-    const days = this.sql.exec(`SELECT day, COUNT(*) games, SUM(turns) calls FROM games GROUP BY day ORDER BY day DESC LIMIT 14`).toArray();
+    const g = this.sql.exec("SELECT COUNT(*) games, COALESCE(SUM(turns),0) calls FROM games WHERE day = ? AND ip <> 'dev'", day).one();
+    const d = this.sql.exec("SELECT COUNT(*) games, COALESCE(SUM(turns),0) calls FROM games WHERE day = ? AND ip = 'dev'", day).one();
+    const days = this.sql.exec(`SELECT day, SUM(ip <> 'dev') games, SUM(CASE WHEN ip <> 'dev' THEN turns ELSE 0 END) calls, SUM(ip = 'dev') testGames FROM games GROUP BY day ORDER BY day DESC LIMIT 14`).toArray();
     const res = this.sql.exec(`SELECT day, theme, SUM(won) won, COUNT(*) played FROM results GROUP BY day, theme ORDER BY day DESC LIMIT 28`).toArray();
     const missed = this.sql.exec(`SELECT theme, name, COUNT(*) times FROM results WHERE won = 0 AND name <> '' GROUP BY theme, name ORDER BY times DESC LIMIT 100`).toArray();
     const bad = this.sql.exec('SELECT created, info, text FROM bad ORDER BY created DESC LIMIT 10').toArray()
       .map(b => ({at: new Date(b.created + 9 * 3600e3).toISOString().slice(0, 19).replace('T', ' '), info: b.info, text: b.text}));
-    return {version: VERSION, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, estCostUSD: +(g.calls * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
+    return {version: VERSION, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, testGames: d.games, testApiCalls: d.calls, estCostUSD: +((g.calls + d.calls) * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
   }
 }

@@ -19,7 +19,11 @@ Anthropic API 키는 이 서버의 비밀값에만 저장되고, 페이지에는
 | 허용 주소 `ALLOWED_ORIGINS` | https://2juwon.github.io |
 | 모델 `MODEL` | claude-haiku-5-5 (없으면 claude-haiku-4-5) |
 
-날짜는 한국 시간 기준으로 바뀌어요.
+날짜는 한국 시간 기준으로 바뀌어요. 첫 질문부터 실패한 판은 판 수에서 빠져요.
+
+## 주인 테스트 모드
+
+게임 주소 뒤에 `?dev=<STATS_TOKEN>`을 붙여 한 번 열면, 그 기기에 저장돼서 이후로는 하루 제한에 걸리지 않아요. 그 판들은 통계에서 `testGames`로 따로 집계되고, GA로도 보내지 않아요. 해제하려면 `?dev=off`로 한 번 열면 돼요.
 
 ## Cloudflare Git 연동으로 배포 (권장)
 
