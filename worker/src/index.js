@@ -7,7 +7,7 @@ import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESS
 export { Room } from './room.js';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-const VERSION = '2026-10-27a';   // 배포 확인용
+const VERSION = '2026-10-27b';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {
@@ -149,7 +149,8 @@ export class Limiter extends DurableObject {
       CREATE TABLE IF NOT EXISTS results(id TEXT, day TEXT, theme TEXT, won INTEGER, name TEXT, questions INTEGER, created INTEGER);
       CREATE INDEX IF NOT EXISTS games_day ON games(day);
       CREATE TABLE IF NOT EXISTS bad(created INTEGER, info TEXT, text TEXT);
-      CREATE TABLE IF NOT EXISTS rooms(day TEXT, ip TEXT, created INTEGER);`);
+      CREATE TABLE IF NOT EXISTS rooms(day TEXT, ip TEXT, created INTEGER);
+      CREATE TABLE IF NOT EXISTS botcalls(day TEXT PRIMARY KEY, n INTEGER);`);
   }
   async start(ip, dailyLimit, perDevice){
     const day = today();
@@ -161,6 +162,13 @@ export class Limiter extends DurableObject {
     this.sql.exec('INSERT INTO games VALUES (?, ?, ?, 1, ?)', id, day, ip, Date.now());
     if(Math.random() < 0.05) this.sql.exec('DELETE FROM games WHERE created < ?', Date.now() - 14 * 86400e3);
     return {ok: true, gameId: id};
+  }
+  async botCall(cap){
+    const day = today();
+    const row = this.sql.exec('SELECT n FROM botcalls WHERE day = ?', day).toArray()[0];
+    if(row && row.n >= cap) return {ok: false};
+    this.sql.exec('INSERT INTO botcalls VALUES (?, 1) ON CONFLICT(day) DO UPDATE SET n = n + 1', day);
+    return {ok: true};
   }
   async roomStart(ip, perDevice){
     const day = today();
@@ -199,6 +207,7 @@ export class Limiter extends DurableObject {
     const bad = this.sql.exec('SELECT created, info, text FROM bad ORDER BY created DESC LIMIT 10').toArray()
       .map(b => ({at: new Date(b.created + 9 * 3600e3).toISOString().slice(0, 19).replace('T', ' '), info: b.info, text: b.text}));
     const rooms = this.sql.exec('SELECT COUNT(*) c FROM rooms WHERE day = ?', day).one().c;
-    return {version: VERSION, whoamiRoomsToday: rooms, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, testGames: d.games, testApiCalls: d.calls, estCostUSD: +((g.calls + d.calls) * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
+    const botCalls = (this.sql.exec('SELECT n FROM botcalls WHERE day = ?', day).toArray()[0] || {n: 0}).n;
+    return {version: VERSION, whoamiRoomsToday: rooms, whoamiBotCallsToday: botCalls, today: {day, games: g.games, limit: dailyLimit, apiCalls: g.calls, testGames: d.games, testApiCalls: d.calls, estCostUSD: +((g.calls + d.calls) * 0.0002).toFixed(3)}, days, results: res, missed, badReplies: bad};
   }
 }

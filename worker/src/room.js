@@ -1,6 +1,10 @@
 // 후엠아이 방 하나 = Durable Object 하나. 참가자들은 WebSocket으로 붙는다.
 import { DurableObject } from 'cloudflare:workers';
 import { newState, apply, join, disconnect, view } from './whoami_game.js';
+import { nextBotJob, botWrite, botAnswer, botTurn, BOT_NAMES } from './whoami_bot.js';
+
+const BOT_CALLS_PER_ROOM = 300;   // 방 하나에서 봇이 Claude를 부를 수 있는 횟수
+const sleep = ms => new Promise(r => setTimeout(r, ms));
 
 const IDLE_MS = 6 * 3600e3;   // 6시간 아무 일 없으면 방 정리
 
@@ -59,12 +63,45 @@ export class Room extends DurableObject {
       }
       ws.serializeAttachment({pid: r.pid});
       this.send(ws, {t: 'joined', pid: r.pid, key: r.key});
-      await this.save(); return this.broadcast();
+      await this.save(); this.broadcast();
+      return this.runBots();
     }
     if(!a.pid) return this.send(ws, {t: 'error', error: 'not_joined'});
+    if(m.t === 'addBot') m.names = BOT_NAMES;
     const err = apply(this.st, a.pid, m);
     if(err) return this.send(ws, {t: 'error', error: err});
     await this.save(); this.broadcast();
+    this.runBots();
+  }
+
+  // 봇 차례가 있으면 하나씩 처리 (사람처럼 잠깐 뜸을 들이고)
+  async runBots(){
+    if(this.botBusy) return;
+    this.botBusy = true;
+    try{
+      for(let guard = 0; guard < 60; guard++){
+        const job = this.st && nextBotJob(this.st);
+        if(!job) break;
+        const before = JSON.stringify([this.st.phase, this.st.turn, this.st.pending]);
+        await sleep(job.kind === 'answer' ? 900 : 1400);
+        const allowAI = await this.allowAI();
+        let msg;
+        if(job.kind === 'write') msg = {t: 'write', text: await botWrite(this.env, this.st, job.pid, allowAI)};
+        else if(job.kind === 'answer') msg = {t: 'answer', ans: await botAnswer(this.env, this.st, job.pid, allowAI)};
+        else { const r = await botTurn(this.env, this.st, job.pid, allowAI); msg = {t: r.t, text: r.text}; }
+        // 그사이 상황이 바뀌었으면 (누가 차례를 넘김 등) 버리고 다시 판단
+        if(JSON.stringify([this.st.phase, this.st.turn, this.st.pending]) !== before && job.kind !== 'write') continue;
+        if(!apply(this.st, job.pid, msg)){ await this.save(); this.broadcast(); }
+      }
+    } finally { this.botBusy = false; }
+  }
+  async allowAI(){
+    this.st.botCalls = (this.st.botCalls || 0) + 1;
+    if(this.st.botCalls > BOT_CALLS_PER_ROOM || !this.env.ANTHROPIC_API_KEY) return false;
+    try{
+      const lim = this.env.LIMITER.get(this.env.LIMITER.idFromName('global'));
+      return (await lim.botCall(Number(this.env.DAILY_BOT_CALLS || 2000))).ok;
+    }catch(e){ return false; }
   }
 
   async webSocketClose(ws){ await this.left(ws); }

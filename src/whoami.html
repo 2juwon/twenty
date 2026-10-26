@@ -112,6 +112,8 @@ const app = document.getElementById('app');
 const $ = id => document.getElementById(id);
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const ls = {get(k){ try{ return JSON.parse(localStorage.getItem(k)); }catch(e){ return null; } }, set(k, v){ try{ localStorage.setItem(k, JSON.stringify(v)); }catch(e){} }};
+// 받침 있으면 '이었어요', 없으면 '였어요'
+function josa(w){ const c = w.charCodeAt(w.length - 1); return c >= 0xAC00 && c <= 0xD7A3 && (c - 0xAC00) % 28 ? '이었어요' : '였어요'; }
 let toastT;
 function toast(msg){ const t = $('toast'); t.textContent = msg; t.hidden = false; clearTimeout(toastT); toastT = setTimeout(() => t.hidden = true, 2600); }
 function track(name, params){ try{ if(window.gtag) window.gtag('event', name, params || {}); }catch(e){} }
@@ -218,6 +220,7 @@ function render(prev){
 function lobby(){
   const isHost = meP().host, hostP = S.players.find(p => p.host);
   const online = S.players.filter(p => p.connected).length;
+  const hasBot = S.players.some(p => p.bot), need = hasBot ? 2 : 3;
   const link = location.origin + location.pathname + '#' + S.code;
   app.innerHTML = `
     <span class="eyebrow">대기실 · ${online}/8명</span>
@@ -227,8 +230,9 @@ function lobby(){
     </div>
     <ul class="players">${S.players.map(p => `<li>
       <span class="nm">${esc(p.name)}${p.pid === S.me ? ' (나)' : ''}</span>
-      ${p.host ? '<span class="badge gold">방장</span>' : ''}${p.connected ? '' : '<span class="badge off">나가 있음</span>'}
-      ${isHost && p.pid !== S.me ? `<button class="link" data-kick="${p.pid}">내보내기</button>` : ''}</li>`).join('')}</ul>
+      ${p.host ? '<span class="badge gold">방장</span>' : ''}${p.bot ? '<span class="badge">🤖 AI</span>' : ''}${p.connected ? '' : '<span class="badge off">나가 있음</span>'}
+      ${isHost && p.pid !== S.me ? `<button class="link" data-kick="${p.pid}">${p.bot ? '빼기' : '내보내기'}</button>` : ''}</li>`).join('')}</ul>
+    ${isHost && S.players.length < 8 ? `<button class="soft" id="addBot">🤖 AI 봇 넣기${hasBot ? '' : ' · 혼자서도 1:1로 할 수 있어요'}</button>` : ''}
     ${hostP && !hostP.connected && !isHost ? '<button class="soft" id="claim">방장이 나가 있어요 · 내가 방장 하기</button>' : ''}
     <div class="card" style="padding:16px;gap:10px">
       <span class="eyebrow">주제</span>
@@ -241,8 +245,8 @@ function lobby(){
         </div>
         <button class="gold" id="rand">🎲 랜덤 주제</button>` : ''}
     </div>
-    ${isHost ? `<button class="primary big" id="start" ${online >= 3 && S.topic ? '' : 'disabled'}>시작하기</button>
-      <p class="note">${online < 3 ? `${3 - online}명 더 모이면 시작할 수 있어요.` : !S.topic ? '주제를 정하면 시작할 수 있어요.' : '시작하면 순서가 섞이고, 각자 옆 사람의 정답을 적어요.'}</p>`
+    ${isHost ? `<button class="primary big" id="start" ${online >= need && S.topic ? '' : 'disabled'}>시작하기</button>
+      <p class="note">${online < need ? `${need - online}명 더 모이면 시작할 수 있어요. 사람이 모자라면 AI 봇을 넣어 보세요.` : !S.topic ? '주제를 정하면 시작할 수 있어요.' : '시작하면 순서가 섞이고, 각자 옆 사람의 정답을 적어요.'}${hasBot ? ' AI 봇은 정답 쓰기·대답·질문을 스스로 해요. 심판 투표는 사람만 해요.' : ''}</p>`
       : '<p class="note">방장이 시작하면 바로 정답 쓰기로 넘어가요.</p>'}
     <button class="link" id="leave">방 나가기</button>`;
   $('copy').onclick = async () => {
@@ -251,6 +255,7 @@ function lobby(){
   };
   app.querySelectorAll('[data-kick]').forEach(b => b.onclick = () => send({t:'kick', pid: b.dataset.kick}));
   if($('claim')) $('claim').onclick = () => send({t:'claimHost'});
+  if($('addBot')) $('addBot').onclick = () => send({t:'addBot'});
   app.querySelectorAll('[data-topic]').forEach(b => b.onclick = () => send({t:'topic', topic: b.dataset.topic}));
   if($('topicSet')) $('topicSet').onclick = () => { const v = $('topicIn').value.trim(); if(v){ send({t:'topic', topic: v}); $('topicIn').value = ''; } };
   if($('rand')) $('rand').onclick = () => { let t; do{ t = RANDOM_TOPICS[Math.floor(Math.random() * RANDOM_TOPICS.length)]; }while(t === S.topic); send({t:'topic', topic: t}); };
@@ -269,7 +274,7 @@ function writeScreen(){
       <input type="text" id="secretIn" maxlength="30" placeholder="주제에 맞는 것으로" autocomplete="off">
       <button class="primary big" type="submit">이걸로 정하기</button>
     </form>`}
-    <ul class="players">${S.order.map(p => `<li><span class="nm">${nm(p)}${p === S.me ? ' (나)' : ''}</span>${S.written.includes(p) ? '<span class="badge gold">작성 완료</span>' : '<span class="badge">쓰는 중</span>'}</li>`).join('')}</ul>`;
+    <ul class="players">${S.order.map(p => `<li><span class="nm">${nm(p)}${p === S.me ? ' (나)' : ''}${P(p).bot ? ' 🤖' : ''}</span>${S.written.includes(p) ? '<span class="badge gold">작성 완료</span>' : '<span class="badge">쓰는 중</span>'}</li>`).join('')}</ul>`;
   if($('wf')) $('wf').onsubmit = e => { e.preventDefault(); const v = $('secretIn').value.trim(); if(!v) return $('secretIn').focus(); myWritten = v; send({t:'write', text: v}); };
 }
 
@@ -277,7 +282,7 @@ function statusOf(pid){
   if(S.solved[pid]) return `<span class="badge gold">${S.solved[pid].rank}등</span>`;
   if(S.out[pid]) return '<span class="badge">탈락</span>';
   if(S.turn === pid) return '<span class="badge gold">차례</span>';
-  return P(pid).connected ? '' : '<span class="badge off">나가 있음</span>';
+  return P(pid).connected || P(pid).bot ? '' : '<span class="badge off">나가 있음</span>';
 }
 
 function play(prev){
@@ -312,9 +317,9 @@ function play(prev){
       </form>
       <button class="link" id="giveup">포기하기</button></div>`;
   } else if(myTurn && pend){
-    action = `<p class="banner">${nm(writer)}님이 대답하는 중… <b>${esc(pend.text)}</b></p>`;
+    action = `<p class="banner">${P(writer).bot ? '🤖 ' : ''}${nm(writer)}님이 ${P(writer).bot ? '생각하는' : '대답하는'} 중… <b>${esc(pend.text)}</b></p>`;
   } else if(asker){
-    action = `<p class="banner">${pend ? `${nm(asker)}님이 물었어요: <b>${esc(pend.text)}</b> · ${nm(writer)}님 대답 기다리는 중` : `${nm(asker)}님이 질문을 고르는 중…`}</p>`;
+    action = `<p class="banner">${pend ? `${nm(asker)}님이 물었어요: <b>${esc(pend.text)}</b> · ${nm(writer)}님 대답 기다리는 중` : `${P(asker).bot ? '🤖 ' : ''}${nm(asker)}님이 질문을 고르는 중…`}</p>`;
   }
 
   const selLog = S.logs[sel] || [];
@@ -328,7 +333,7 @@ function play(prev){
     <div class="grid">${S.order.map(pid => {
       const sec = S.secrets[pid] || {}, used = S.used[pid] || 0;
       return `<button class="pc ${S.turn === pid ? 'turn' : ''} ${sel === pid ? 'sel' : ''}" data-sel="${pid}">
-        <span class="who"><b>${nm(pid)}${pid === me ? ' (나)' : ''}</b>${statusOf(pid)}</span>
+        <span class="who"><b>${nm(pid)}${pid === me ? ' (나)' : ''}${P(pid).bot ? ' 🤖' : ''}</b>${statusOf(pid)}</span>
         <span class="tag ${sec.hidden ? 'hidden' : ''}">${sec.hidden ? '???' : esc(sec.text)}</span>
         <span class="meter" aria-label="${used}/${S.maxQ} 고개"><span style="width:${Math.min(100, used / S.maxQ * 100)}%"></span></span>
         <span class="note">${used}/${S.maxQ} 고개 · 쓴 사람 ${nm(writerOf(pid))}</span></button>`;
@@ -353,7 +358,7 @@ function play(prev){
 
 function logItem(e){
   const me = S.me;
-  const canDispute = !e.vote && e.asker !== me && e.writer !== me;
+  const canDispute = !e.vote && e.asker !== me && e.writer !== me && !meP().bot;
   let v = '';
   if(e.vote){
     const votes = Object.values(e.vote.votes), wrong = votes.filter(x => x === 'wrong').length;
@@ -380,10 +385,11 @@ function endScreen(){
     const ra = S.solved[a] ? S.solved[a].rank : 99, rb = S.solved[b] ? S.solved[b].rank : 99;
     return ra - rb || (S.used[a] || 0) - (S.used[b] || 0);
   });
+  const myAns = (S.secrets[S.me] || {}).text || '';
   if(!S._tracked){ track('whoami_end', {players: S.order.length}); S._tracked = true; }
   app.innerHTML = `
     <span class="eyebrow">게임 끝 · 주제: ${esc(S.topic)}</span>
-    <h2 class="q">${S.solved[S.me] ? `${S.solved[S.me].rank}등! 내 정답은 <b>${esc((S.secrets[S.me] || {}).text)}</b>였어요.` : `내 정답은 <b>${esc((S.secrets[S.me] || {}).text)}</b>였어요.`}</h2>
+    <h2 class="q">${S.solved[S.me] ? `${S.solved[S.me].rank}등! ` : ''}내 정답은 <b>${esc(myAns)}</b>${josa(myAns)}.</h2>
     <ol class="rank">${ranked.map(pid => {
       const s = S.secrets[pid] || {};
       return `<li><span class="r">${S.solved[pid] ? S.solved[pid].rank : '–'}</span>

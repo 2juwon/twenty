@@ -61,7 +61,7 @@ export function canRespond(st, pid){
 }
 // 이의 제기 투표 자격: 질문한 사람과 정답 쓴 사람 빼고
 function voters(st, entry){
-  return st.players.filter(p => p.pid !== entry.asker && p.pid !== entry.writer && st.order.includes(p.pid)).map(p => p.pid);
+  return st.players.filter(p => !p.bot && p.pid !== entry.asker && p.pid !== entry.writer && st.order.includes(p.pid)).map(p => p.pid);
 }
 function findEntry(st, id){
   for(const pid in st.logs){ const e = st.logs[pid].find(x => x.id === id); if(e) return e; }
@@ -93,6 +93,15 @@ export function apply(st, pid, m){
     case 'topic':
       if(!isHost || st.phase !== 'lobby') return 'not_allowed';
       st.topic = clean(m.topic, LEN.topic); return;
+    case 'addBot': {
+      if(!isHost || st.phase !== 'lobby') return 'not_allowed';
+      if(st.players.length >= MAX_PLAYERS) return 'full';
+      const used = new Set(st.players.map(p => p.name));
+      const base = (m.names || []).find(n => !used.has('AI ' + n)) || 'AI ' + (st.players.length + 1);
+      const name = base.startsWith('AI ') ? base : 'AI ' + base;
+      st.players.push({pid: rid(), key: rid(), name, host: false, connected: true, bot: true});
+      return;
+    }
     case 'claimHost': {
       const h = host(st);
       if(h && h.connected) return 'not_allowed';
@@ -102,7 +111,7 @@ export function apply(st, pid, m){
     case 'leave':
       if(st.phase !== 'lobby') return 'not_allowed';
       st.players = st.players.filter(p => p.pid !== pid);
-      if(isHost && st.players[0]) st.players[0].host = true;
+      if(isHost){ const h = st.players.find(p => !p.bot); if(h) h.host = true; }
       return;
     case 'kick': {
       if(!isHost || st.phase !== 'lobby' || m.pid === pid) return 'not_allowed';
@@ -111,7 +120,9 @@ export function apply(st, pid, m){
     case 'start': {
       if(!isHost || st.phase !== 'lobby') return 'not_allowed';
       if(!st.topic) return 'no_topic';
-      if(st.players.filter(p => p.connected).length < MIN_PLAYERS) return 'not_enough';
+      // AI 봇이 있으면 2명(나 + 봇 1)부터 가능
+      const need = st.players.some(p => p.bot) ? 2 : MIN_PLAYERS;
+      if(st.players.filter(p => p.connected).length < need) return 'not_enough';
       st.players = st.players.filter(p => p.connected);
       const ids = st.players.map(p => p.pid);
       for(let i = ids.length - 1; i > 0; i--){ const j = Math.floor(Math.random() * (i + 1)); [ids[i], ids[j]] = [ids[j], ids[i]]; }
@@ -177,7 +188,7 @@ export function apply(st, pid, m){
       if(!isHost || st.phase !== 'end') return 'not_allowed';
       Object.assign(st, {phase: 'lobby', order: [], secrets: {}, logs: {}, used: {}, solved: {}, out: {}, turn: null, pending: null, round: st.round + 1});
       st.players = st.players.filter(p => p.connected);
-      if(!host(st) && st.players[0]) st.players[0].host = true;
+      if(!host(st)){ const h = st.players.find(p => !p.bot); if(h) h.host = true; }
       return;
     default: return 'unknown';
   }
@@ -216,7 +227,7 @@ export function view(st, pid){
   }
   return {
     t: 'state', me: pid, code: st.code, phase: st.phase, topic: st.topic, round: st.round, maxQ: MAX_Q,
-    players: st.players.map(p => ({pid: p.pid, name: p.name, host: !!p.host, connected: !!p.connected})),
+    players: st.players.map(p => ({pid: p.pid, name: p.name, host: !!p.host, connected: !!p.connected, bot: !!p.bot})),
     order: st.order, written: st.phase === 'write' ? Object.values(st.secrets).map(s => s.by) : [],
     myTarget: st.order.length ? targetOf(st, pid) : null,
     secrets: st.phase === 'write' ? {} : secrets,

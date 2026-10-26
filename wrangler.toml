@@ -8,6 +8,7 @@ ALLOWED_ORIGINS = "https://2juwon.github.io"
 DAILY_GAMES = "100"            # 하루 전체 Claude 추리 판 수
 DAILY_GAMES_PER_DEVICE = "10"  # 기기(IP)당 하루 판 수
 DAILY_ROOMS_PER_DEVICE = "30" # 후엠아이: 기기(IP)당 하루 방 만들기 수
+DAILY_BOT_CALLS = "2000"       # 후엠아이: 하루 전체 AI 봇 호출 수 (넘으면 봇이 간단한 규칙으로 대신)
 MODEL = "claude-haiku-5-5,claude-haiku-4-5"   # 앞에서부터 시도
 
 [[durable_objects.bindings]]
