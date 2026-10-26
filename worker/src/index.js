@@ -63,7 +63,7 @@ export default {
     });
     if(!res.ok){
       console.log('anthropic error', res.status, (await res.text()).slice(0, 300));
-      return json({error: 'upstream', gameId}, 502);
+      return json({error: 'upstream', status: res.status, gameId}, 502);
     }
     const data = await res.json();
     const text = (data.content || []).filter(c => c.type === 'text').map(c => c.text).join('');
