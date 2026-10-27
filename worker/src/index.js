@@ -7,7 +7,7 @@ import { buildPrompt, cleanHistory, parseReply, CLAUDE_LIMIT, CLAUDE_EXTRA_GUESS
 export { Room } from './room.js';
 const CODE_CHARS = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789';
 
-const VERSION = '2026-10-27c';   // 배포 확인용
+const VERSION = '2026-10-27d';   // 배포 확인용
 const MAX_TURNS = CLAUDE_LIMIT + CLAUDE_EXTRA_GUESSES + 7;   // 판당 API 호출 상한 (되돌리기 여유 포함)
 
 export default {
@@ -88,7 +88,8 @@ export default {
     gameId = gate.gameId || gameId;
 
     // 모델을 순서대로 시도 (없는 모델이면 다음 것으로), 답을 못 읽으면 한 번 더 엄격하게
-    const models = (env.MODEL || 'claude-haiku-5-5').split(',').map(m => m.trim()).filter(Boolean);
+    // 할머니 모드 모델: GRANNY_MODEL이 있으면 그걸 먼저 (예: 더 똑똑한 모델로 바꾸고 싶을 때)
+    const models = (env.GRANNY_MODEL || env.MODEL || 'claude-haiku-5-5').split(',').map(m => m.trim()).filter(Boolean);
     const headers = {'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'};
     if(env.ANTHROPIC_WORKSPACE_ID) headers['anthropic-workspace-id'] = env.ANTHROPIC_WORKSPACE_ID;
     async function ask(prompt){
