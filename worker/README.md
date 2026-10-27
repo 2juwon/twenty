@@ -18,6 +18,7 @@ Anthropic API 키는 이 서버의 비밀값에만 저장되고, 페이지에는
 | 판당 API 호출 | 최대 30번 |
 | 허용 주소 `ALLOWED_ORIGINS` | https://2juwon.github.io |
 | 모델 `MODEL` | claude-haiku-5-5 (없으면 claude-haiku-4-5) |
+| 후엠아이 AI 봇만 다른 모델 `BOT_MODEL` | 비워 두면 `MODEL`. 예: `claude-sonnet-5-5,claude-haiku-5-5` |
 | 할머니 모드만 다른 모델 `GRANNY_MODEL` | 비워 두면 `MODEL`. 예: `claude-sonnet-5-5,claude-haiku-5-5` (더 똑똑하지만 비쌈) |
 
 날짜는 한국 시간 기준으로 바뀌어요. 첫 질문부터 실패한 판은 판 수에서 빠져요.

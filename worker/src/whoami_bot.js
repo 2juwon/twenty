@@ -4,8 +4,9 @@ import { writerOf, MAX_Q, openChances, revealsAnswer } from './whoami_game.js';
 
 export const BOT_NAMES = ['봇돌이', '봇순이', '깡통이', '삐약봇', '로보할배', '찌릿봇', '뚝딱봇'];
 
-export async function callClaude(env, prompt, maxTokens = 300){
-  const models = (env.MODEL || 'claude-haiku-5-5').split(',').map(m => m.trim()).filter(Boolean);
+export async function callClaude(env, prompt, maxTokens = 600){
+  // 봇만 다른 모델을 쓰고 싶으면 BOT_MODEL (예: claude-sonnet-5-5,claude-haiku-5-5)
+  const models = (env.BOT_MODEL || env.MODEL || 'claude-haiku-5-5').split(',').map(m => m.trim()).filter(Boolean);
   const headers = {'x-api-key': env.ANTHROPIC_API_KEY, 'anthropic-version': '2023-06-01', 'content-type': 'application/json'};
   if(env.ANTHROPIC_WORKSPACE_ID) headers['anthropic-workspace-id'] = env.ANTHROPIC_WORKSPACE_ID;
   for(const model of models){
@@ -73,8 +74,8 @@ export async function botAnswer(env, st, pid, allowAI){
       const o = await ai(env, `후엠아이 게임에서 너는 상대의 정답을 알고 있어. 상대가 자유 질문 찬스를 써서 단답이 아닌 질문을 했어.
 정답: ${secret} (주제: ${st.topic})
 질문: ${p.text}
-질문 속 나는/저는/저의는 정답(${secret})을 뜻해. 사실대로 짧게(25자 이내) 대답해. 정답 이름이나 그 일부는 절대 쓰지 마. 힌트가 되되 바로 답이 나오지 않게.
-${RULE} 예: {"reply":"남극에 살아요"}`, o => typeof o.reply === 'string' && o.reply.trim() && !revealsAnswer(o.reply, secret));
+질문 속 나/저/저의/제가는 질문한 사람이 아니라 정답인 ${secret}을(를) 가리켜. 먼저 known에 ${secret}에 대해 이 질문과 관련된 사실을 적고, reply에 사실대로 짧게(25자 이내) 대답해. 정답 이름이나 그 일부는 절대 쓰지 마. 힌트가 되되 바로 답이 나오지 않게.
+${RULE} 예: {"known":"펭귄은 남극에 사는 새","reply":"남극에 살아요"}`, o => typeof o.reply === 'string' && o.reply.trim() && !revealsAnswer(o.reply, secret));
       if(o) return {ans: 'open', reply: o.reply.trim().slice(0, 40)};
     }
     return {ans: 'open', reply: '음… 비밀이에요'};
@@ -88,18 +89,26 @@ async function yesNo(env, st, p, secret, allowAI){
     if(allowAI){
       const o = await ai(env, `후엠아이 게임에서 상대가 정답을 외쳤어. 진짜 정답: ${secret} (주제: ${st.topic})
 상대가 외친 답: ${p.text}
-같은 것을 가리키면 correct (띄어쓰기, 별명, 영어 표기, 약간의 오타는 같은 것으로 봐). 다르면 wrong.
-${RULE} 예: {"ans":"correct"}`, o => ['correct', 'wrong'].includes(o.ans));
+같은 것을 가리키면 correct (띄어쓰기, 별명, 영어 표기, 약간의 오타는 같은 것으로 봐). 비슷하지만 다른 것(예: 고양이와 호랑이, 유재석과 유세윤)은 wrong.
+${RULE} 예: {"why":"같은 사람의 별명","ans":"correct"}`, o => ['correct', 'wrong'].includes(o.ans));
       if(o) return o.ans;
     }
     return 'wrong';
   }
   if(allowAI){
-    const o = await ai(env, `후엠아이 게임에서 너는 상대의 정답을 알고 있어. 상대가 자기 정답을 맞히려고 예/아니요 질문을 했어.
-정답: ${secret} (주제: ${st.topic})
-질문: ${p.text}
-질문 속 나는/저는/제가는 정답(${secret})을 뜻해. 사실대로 답해. 사람마다 다르게 볼 수 있거나 정말 애매하면 unsure.
-${RULE} 예: {"ans":"yes"}  (yes / no / unsure 중 하나)`, o => ['yes', 'no', 'unsure'].includes(o.ans));
+    const o = await ai(env, `후엠아이 게임의 심판처럼 사실대로 대답해야 해.
+상대의 정답(상대만 모름): ${secret}   (주제: ${st.topic})
+상대가 한 예/아니요 질문: ${p.text}
+
+중요: 질문 속 나/저/제가/저의/내는 질문한 사람이 아니라 정답인 ${secret}을(를) 가리켜. 너 자신(AI)도 아니야.
+순서대로 JSON에 적어:
+1. restated: 질문에서 나/저를 ${secret}(으)로 바꿔 다시 쓴 문장 (예: ${secret}은(는) 배우인가요?)
+2. known: ${secret}에 대해 널리 알려진 사실 중 이 질문과 관련된 것 (한두 문장, 모르면 모른다고)
+3. ans: restated에 대한 답
+   - yes: 대부분의 사람이 그렇다고 할 때. 그 사람·그것을 대표하는 특징일 때.
+   - no: 아닐 때. 카메오·잠깐 한 적 있는 정도는 no (예: 예능인이 드라마에 잠깐 나온 걸로 배우라고 하지 않음).
+   - unsure: 정말로 사람마다 다르게 답할 만할 때만. 귀찮다고 unsure 하지 마.
+${RULE} 예: {"restated":"펭귄은 날 수 있나요?","known":"펭귄은 날지 못하고 헤엄친다","ans":"no"}`, o => ['yes', 'no', 'unsure'].includes(o.ans));
     if(o) return o.ans;
   }
   return 'unsure';
@@ -120,8 +129,9 @@ export async function botTurn(env, st, pid, allowAI){
 ${lines}
 남은 기회: ${left}번 (질문과 정답 외치기 모두 1번씩 씀)
 참고로 다른 사람들의 정답은 ${others.join(', ')} 이라서 네 정답은 이것들과 다를 가능성이 커.
-규칙: 짧고 분명한 한국어 질문 하나 (예: 저는 동물인가요?). 이미 한 질문은 다시 하지 마. 70% 이상 확신하거나 남은 기회가 1번이면 정답을 외쳐.
-${chance ? '지금 자유 질문 찬스가 있어. 예/아니요가 아닌 질문(예: 저의 대표작은 무엇인가요? / 저는 주로 어디에 있나요?)을 할 수 있어. 쓰려면 type을 open으로.\n' : ''}${RULE} 예: {"type":"ask","text":"저는 날 수 있나요?"} 또는 {"type":"guess","text":"펭귄"}${chance ? ' 또는 {"type":"open","text":"저는 주로 어디에 사나요?"}' : ''}`,
+먼저 facts에 지금까지 대답으로 확실해진 사실을, candidates에 그 사실과 모두 맞는 후보 3~5개를 적어.
+규칙: 짧고 분명한 긍정문 질문 하나 (예: 저는 동물인가요?). 부정문·두 가지를 묻는 질문 금지. 이미 한 질문은 다시 하지 마. 후보를 반반 나누는 질문이 좋아. 1순위 후보가 70% 이상 확실하거나 남은 기회가 1번이면 정답을 외쳐.
+${chance ? '지금 자유 질문 찬스가 있어. 예/아니요가 아닌 질문(예: 저의 대표작은 무엇인가요? / 저는 주로 어디에 있나요?)을 할 수 있어. 쓰려면 type을 open으로.\n' : ''}${RULE} 예: {"facts":"동물임, 날지 못함","candidates":["펭귄","타조"],"type":"ask","text":"저는 추운 곳에 사나요?"} 또는 {"facts":"...","candidates":["펭귄"],"type":"guess","text":"펭귄"}${chance ? ' 또는 {"type":"open","text":"저는 주로 어디에 사나요?"}' : ''}`,
       o => ['ask', 'guess', 'open'].includes(o.type) && typeof o.text === 'string' && o.text.trim() && (o.type !== 'open' || chance));
     if(o) return o.type === 'open' ? {t: 'ask', open: true, text: o.text.trim().slice(0, 60)} : {t: o.type, text: o.text.trim().slice(0, 60)};
   }
